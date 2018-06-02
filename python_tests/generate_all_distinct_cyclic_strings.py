@@ -3,6 +3,8 @@
 # * they are a mirroring of one another:                                e.g. 101100 == 001101
 # * they are a cyclic permutation of a mirroring of one another:        e.g. 101100 == 011010
 
+# Anne-Laure Ehresmann
+
 import sys
 from itertools import permutations
 

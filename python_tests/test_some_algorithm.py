@@ -1,13 +1,16 @@
 # tests a particular algorithm on a bunch of strings.
-# UNFINISHED: see verify configuration func or whatever its called
+# Anne-Laure Ehresmann
 
 import sys
 import random
+from generate_all_distinct_necklaces import strings_balanced_necklaces
+
 
 # evil global variables
 max_iterations = 10000 # how many iterations the algorithm is allowed to go through before it declares it as failed
 number_of_strings_to_test_on = 2 # how many strings the algorithm will be tested on
 window_size = 6 # for now t = w
+num_of_times_to_repeat_pattern = 5
 
 class algorithm:
     def __init__(self):
@@ -26,11 +29,10 @@ def shuffle(string):
 # partitions a string, allows shifting
 def partition_string(str, window_size: int, shift: int):
     partitions = []
+    str = str[shift:] + str[:shift]
     for i in range(0, len(str), window_size):
-        partitions.append(str[i+shift:i+window_size+shift])
+        partitions.append(str[i:(i+window_size)])
 
-    # add the beginning of the string to the last partition
-    partitions[-1] += (str[:shift])
     return partitions
 
 # returns the period of a string, if any
@@ -49,31 +51,33 @@ def cyclic_shifts(string):
         cyclic_shifts_list.append(string)
     return cyclic_shifts_list
 
-
 #tests an algorithm on a specific string. returns true if the string eventually reached a valid conf, false if not
-def test_algorithm_on_a_string(str, algorithm, num_of_max_iterations: int, window_size: int):
-    shift = 0
+def test_algorithm_on_a_string(input_string: str,output_string: str, alg: algorithm, num_of_max_iterations: int, window_size: int):
+    shift = -1
     for i in range(0, max_iterations):
-        shift = (shift + 1) % window_size
-        partitions = partition_string(str, window_size, shift)
-        for partition in partitions:
-            count = partition.count('0')
-            if count in algorithm.rules:
-                partition = algorithm.rules[count]
-        if verify_configuration_validity("".join(partitions)):
-            print("succeeded!")
-            print(partitions)
-            return true
-    return false
-
+        shift = (shift + 1) % len(input_string)
+        partitions = partition_string(input_string, window_size, shift)
+        for i in range(0, len(partitions)):
+            count = partitions[i].count('0')
+            if count in alg.rules:
+                partitions[i] = alg.rules[count]
+        print(",".join(partitions))
+        if verify_configuration_validity("".join(partitions), output_string):
+            return True
+    return False
 
 # verifies if the string is valid, used by test_algorithm
-def verify_configuration_validity(string, valid_period):
-    period_shifts = cyclic_shifts(valid_period)
-    string_period = principal_period(string)
-    for valid in period_shifts:
-        if string_period == valid: return True
-        if string_period == valid[::-1]: return True # if same as inversed period
+def verify_configuration_validity(string, expected_output):
+    actual_period = principal_period(string)
+    if actual_period == None:
+        return False
+    else:
+        expected_period = principal_period(expected_output)
+        expected_period_shifts = cyclic_shifts(expected_period)
+    for shift in expected_period_shifts:
+        if shift == actual_period: return True
+        if shift == actual_period[::-1]: return True # if same as inversed period
+    return False
 
 
 def main():
@@ -88,13 +92,18 @@ def main():
         alg.add_rule(int(sys.argv[1]), sys.argv[2])
         alg.add_rule(int(sys.argv[3]), sys.argv[4])
 
-        string = "0"*window_size + "1"*window_size
-        valid_period = principal
-        valid = 0
-        for i in range(0, number_of_strings_to_test_on):
-            print('testing on string: ' + string)
-            string = shuffle(string)
-            if test_algorithm_on_a_string(string, alg, max_iterations, window_size): valid += 1
+        expected_outputs = strings_balanced_necklaces(int(window_size/2)) # note: function is from generate_all_distinct_necklaces.py
+        for i in range(0, len(expected_outputs)):
+            expected_outputs[i] = expected_outputs[i] * num_of_times_to_repeat_pattern
 
+        reached_patterns = []
+        for i in range(0, len(expected_outputs)):
+            random_input_string = shuffle(expected_outputs[i])
+            if test_algorithm_on_a_string(random_input_string, expected_outputs[i], alg, max_iterations, window_size):
+                reached_patterns.append(expected_outputs[i])
+        if len(reached_patterns) > 0:
+            print("alg: " + str(alg.rules) + " succeeded in reaching patterns: " + str(reached_patterns))
+        else:
+            print("alg: " + str(alg.rules) + " failed")
 
 main()
