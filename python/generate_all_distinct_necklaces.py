@@ -4,7 +4,6 @@
 # * they are a cyclic permutation of a mirroring of one another:        e.g. 101100 == 011010
 
 
-
 from itertools import combinations, chain
 import numpy as np
 import sys
