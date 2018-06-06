@@ -1,16 +1,19 @@
 import sys
 
+
 class algo:
     def add_rule(self, int, str):
         self.rules[int] = str
 
     def __init__(self, *args):
-        self.rules = {} #dictionary
+        self.rules = {}  # Dictionary
         for i in range(1, len(args), 2):
-            if i + 1 >= len(args): break
-            self.add_rule(count_rule_1, rule_1)
+            if i >= len(args):
+                break
+            self.add_rule(args[i - 1], args[i])
 
     def __str__(self):
-        for key,value in self.rules.items():
-           sys.stdout.write(key + " " + value + " ")
-        sys.stdout.write('\n')
+        ret = ""
+        for key, value in self.rules.items():
+            ret += (str(key) + " " + value + " ")
+        return ret

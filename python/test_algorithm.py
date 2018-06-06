@@ -6,26 +6,12 @@
 import sys
 import random
 import algo
-import configuration
+from committee import Committee
+from configuration import configuration, configuration_builder
 
 # utitlity functions:
-# partitions a string, allows shifting
-def partition_string(input_string: str, window_size: int, shift: int):
-    input_string = input_string[shift:] + input_string[:shift]
-    partitions = []
-    for i in range(0, len(input_string), window_size):
-        partitions.append(input_string[i:(i+window_size)])
-    return partitions
-
-
-# defined here so one can break out of a bigger loop that uses this function.
-def check_for_cycle(partitions_as_single_string, past_configurations, verbose):
-    for past in past_configurations:
-        if partitions_as_single_string == past: return True
-    return False
-
 #tests an algo on a specific string. returns True if the string eventually reached a valid conf, False if not
-def test_algo_on_a_string(conf: configuration):
+def test_algo_on_a_committee(conf: configuration):
     shift = -1 # so that it starts at 0
     past_configurations = []
     cycle_counter = 0
@@ -33,22 +19,22 @@ def test_algo_on_a_string(conf: configuration):
 
     for i in range(0, conf.max_iterations):
         local_cycle = False
-        shift = (shift + 1) % len(conf.input_string)
-        partitions = partition_string(conf.input_string, conf.window_size, shift)
+        shift = (shift + 1) % len(conf.committee)
+        partitions = partition_committee(conf.committee, conf.window_size, shift)
 
-        if verify_configuration_validity(partitions, conf):
+        if verify_configuration_validity(conf):
             used_max_iterations = False
             break
 
-        partitions_as_single_string = "".join(partitions)
         # checking for cycles
-        if check_for_cycle(partitions_as_single_string, past_configurations, conf.verbose):
-            local_cycle = True
-            cycle_counter += 1
+        if check_for_cycle(conf, past_configurations):
+           local_cycle = True
+           cycle_counter += 1
 
         if cycle_counter >= len(conf.expected_output):
+            used_max_iterations = False
             print('assuming we\'ve reached full cycle. You should check this with verbose on! Algorithm: '
-                    + str(conf.alg.rules) + " on string " + conf.input_string)
+                    + str(conf.alg.rules) + " on string " + conf.committee)
             break
         #print(local_cycle)
         if local_cycle:
@@ -63,25 +49,32 @@ def test_algo_on_a_string(conf: configuration):
             if count in conf.alg.rules:
                 partitions[i] = conf.alg.rules[count]
 
-        partitions_as_single_string = "".join(partitions)
-        if(conf.verbose): print(partitions_as_single_string)
+        conf.committee = "".join(partitions)
+        print(conf.committee)
+        if(conf.verbose): print(conf.committee)
 
-        if verify_configuration_validity(partitions, conf):
+        if verify_configuration_validity(conf):
             used_max_iterations = False
             break
-        else: past_configurations.append(partitions_as_single_string)
-
-    if used_max_iterations: print(str(conf.alg.rules) + " needed more iterations on string input " + conf.input_string)
+        else: past_configurations.append(conf.committee)
+    if used_max_iterations: print(str(conf.alg.rules) + " needed more iterations on string input " + conf.committee)
 
 
 # verifies if the string is valid, used by test_algo
-def verify_configuration_validity(partitions: list, conf: configuration):
-    for partition in partitions:
-        if partition.count('0') != conf.pattern.count('0'): return False
-
-    if(conf.verbose): print("".join(partitions) + ": VALID")
-    print(str(conf.alg.rules) + " succeeded!")
-    return True
+def verify_configuration_validity(conf: configuration):
+    valid = False
+    partitions = []
+    for i in range(0, conf.window_size):
+        partitions = partition_committee(conf.committee, conf.window_size, i)
+        count = [partition.count('0') for partition in partitions]
+        if len(set(count)) == 1: # every partition has the same number of 0s, so string must be balanced.
+            valid = True
+            break
+    if valid:
+        if(conf.verbose): print("".join(partitions) + ": VALID")
+        print(str(conf.alg.rules) + " succeeded!")
+        return True
+    return False
 
 
 def main():
@@ -89,18 +82,17 @@ def main():
         print('Error: incorrect number of inputs given: ' + str(sys.argv))
         sys.exit(0)
 
-    alg = algo(int(sys.argv[1]), sys.argv[2], int(sys.argv[3]), sys.argv[4])
-
+    alg = algo.algo(int(sys.argv[1]), sys.argv[2], int(sys.argv[3]), sys.argv[4])
     cb = configuration_builder()
-    conf = cb.with_alg(alg).with_pattern(sys.argv[5]).with_input_string(sys.argv[6]).with_max_iterations(sys.argv[7]).with_verbose(sys.argv[8]).build()
+    conf = cb.with_alg(alg).with_pattern(sys.argv[5]).with_committee(sys.argv[6]).with_max_iterations(sys.argv[7]).with_verbose(sys.argv[8]).build()
     if conf is None:
         print('something went wrong with your configuration! Exiting.')
         sys.exit(0)
 
     if conf.verbose:
-        print("testing " + str(conf.alg.rules) + " on " + conf.input_string)
+        print("testing " + str(conf.alg.rules) + " on " + conf.committee)
 
-    test_algo_on_a_string(conf)
+    test_algo_on_a_committee(conf)
 
 
 # don't call main unless the script is called directly.
