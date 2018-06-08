@@ -65,7 +65,7 @@ def generate_random_algorithm(num_of_rules=2, length_of_pattern=8):
             if rule_count in alg.rules:
                 continue
             else:
-                alg.add_rule(rule_count, shuffle('0' * rule_count
+                alg.add_rule(shuffle('0' * rule_count
                              + '1' * (length_of_pattern - rule_count)))
             added = True
     return alg
@@ -85,7 +85,7 @@ def generate_all_algorithms(num_of_rules=2, length_of_pattern=8):
         if len(rules_count) == len(set(rules_count)):
             alg = algo()
             for rule in comb:
-                alg.add_rule(str(rule.count('0')), rule)
+                alg.add_rule(rule)
             algorithms.append(alg)
     return algorithms
 
@@ -96,7 +96,9 @@ def main():
         print('You need to give me some sort of generating guidance.'
               ' Check the file to see all possible choices.')
         sys.exit(0)
-    generator = sys.argv[1], arg_1 = '', arg_2 = ''
+    generator = sys.argv[1]
+    arg_1 = ''
+    arg_2 = ''
     if len(sys.argv) > 2:
         arg_1 = sys.argv[2]
     if len(sys.argv) > 3:

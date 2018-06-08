@@ -2,15 +2,13 @@ import sys
 
 
 class algo:
-    def add_rule(self, int, str):
-        self.rules[int] = str
-
     def __init__(self, *args):
         self.rules = {}  # Dictionary
-        for i in range(1, len(args), 2):
-            if i >= len(args):
-                break
-            self.add_rule(args[i - 1], args[i])
+        for rule in args:
+            self.add_rule(rule)
+
+    def add_rule(self, str):
+        self.rules[str.count('0')] = str
 
     def __str__(self):
         ret = ""

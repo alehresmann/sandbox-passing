@@ -11,10 +11,8 @@ def is_rotation_of(arr1: bitarray, arr2: bitarray):
         return True
     return False
 
-
 def shift(string, shift_by: int):
         return string[shift_by:] + string[:shift_by]
-
 
 class committee:
     def __init__(self, initial_config: str, pattern: str):
@@ -30,7 +28,7 @@ class committee:
         self.past_iterations = set()
 
     def get(self):
-        return str(self.configuration)
+        return str(self.configuration)[10:-2]
 
     def get_partition(self, index: int):
         return self.configuration[index
@@ -70,24 +68,31 @@ class committee:
         rule_count = rule.count('0')
         valid = []
         for i, partition in enumerate(self.get_partitions()):
-            print('yes')
             if partition.count(0) == rule_count:
                 # ensuring partition isnt a rotation of the pattern
-                if not is_rotation_of(partition, bitarray(rule)):
-                    valid.append(i)
+                #if not is_rotation_of(partition, bitarray(rule)):
+                valid.append(i)
         return valid
 
     def apply_rule(self, partition_index: int, rule: str):
-        self.configuration = self.configuration[
-                :partition_index * self.window_size]
-        + rule
-        + self.configuration[(partition_index + 1) * self.window_size:]
+        new = bitarray()
+        new.extend(self.configuration[:partition_index * self.window_size])
+        new.extend(bitarray(rule))
+        new.extend(self.configuration[(partition_index + 1) * self.window_size:])
+        self.configuration = new
 
     def record_partition(self):
-        self.past_iterations.add(int(self.configuration))
+        current = 0
+        for bit in self.configuration:  # NOTE: here too
+            current = (current << 1) | bit
+
+        self.past_iterations.add(current)
 
     def is_cycle(self):
-        current = int(self.configuration)
+        current = 0
+        for bit in self.configuration:  # NOTE: here too
+            current = (current << 1) | bit
+
         if current in self.past_iterations:
             return True
         return False
@@ -101,7 +106,7 @@ class committee:
             temp_int = 0
             # NOTE: the loop below might be ineficcient
             for bit in temp:
-                temp_int = (i << 1) | bit
+                temp_int = (temp_int << 1) | bit
 
             if temp_int == other:
                 return True

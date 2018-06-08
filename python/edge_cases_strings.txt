@@ -1,0 +1,14 @@
+Not implemented yet. Idea: contain edge case strings within this file,
+that algs should always test against. for example, string:
+
+000000000000111111111111
+
+automatically disqualifies the algs of the following form:
+
+000111 000011
+000111 100000
+011111 001100
+etc...
+
+because none can apply successfully their rule as all valid partitions
+will merely be a shift of their rules.
