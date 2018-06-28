@@ -3,7 +3,6 @@ import random
 import itertools
 import numpy as np
 
-from algo import algo
 import test_algorithm as ta
 
 
@@ -57,17 +56,18 @@ def generate_random_algorithm(num_of_rules=2, length_of_pattern=8):
         return None
     default_string = '0' * int(length_of_pattern / 2)
     + '1' * int(length_of_pattern / 2)
-    alg = algo()
+    alg = []
     for i in range(0, num_of_rules):
-        added = False
-        while not added:
+        while True:
             rule_count = random.randint(1, length_of_pattern - 1)
-            if rule_count in alg.rules:
-                continue
-            else:
-                alg.add_rule(shuffle('0' * rule_count
+            valid = true
+            for rule in alg:
+                if rule_count == rule.count('0'):
+                    valid = false
+            if valid:
+                alg.append(shuffle('0' * rule_count
                              + '1' * (length_of_pattern - rule_count)))
-            added = True
+                break
     return alg
 
 
@@ -83,10 +83,7 @@ def generate_all_algorithms(num_of_rules=2, length_of_pattern=8):
         rules_count = [rule.count('0') for rule in comb]
         # all rules deal with different number of 0s
         if len(rules_count) == len(set(rules_count)):
-            alg = algo()
-            for rule in comb:
-                alg.add_rule(rule)
-            algorithms.append(alg)
+            algorithms.append(comb)
     return algorithms
 
 

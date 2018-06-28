@@ -5,15 +5,21 @@
 # Assumes the length of the pattern is also the window size.
 # In other words, assumes w = t
 
+# verbosity levels:
+#    minimal    = 0
+#    info       = 1
+#    debug      = 2
+
 import sys
 import argparse
+import logging
 
-from algo import algo
 from committee import committee
-from configuration import configuration, configuration_builder
+from committee_handler import committee_handler, handler_builder
 import generators as gen
 import test_algorithm as ta
 import filereader as fr
+
 
 def main():
     parser = argparse.ArgumentParser(description='CLI for testing'
@@ -66,28 +72,58 @@ def main():
 
     # CONFIGURATION
     # use all of these optionally
-    parser.add_argument('--verbose', '-v', action='store_true',
-            default=False, help='print information on every iteration')
     parser.add_argument('--max_iterations', '-mi', type=int,
             default=10000, help='the max iterations required before'
             ' the algorithm quits.')
-    parser.add_argument('--no-cycles', '-nc',
-            action='store_true', help='turns off checking for cycles.')
+
+    parser.add_argument('--verbose', '-v', type=int,
+            default=0, help='The level of verbosity. 0 is the lowest,'
+            '2 the highest.')
+
+    parser.add_argument('--check_cycles', '-cc',
+            action='store_true', help='keeps track of configurations'
+            'and considers the algorithm to have failed if it cycles.')
+
+    parser.add_argument('--check_shifts', '-cs', action='store_true',
+            help='checks if the rule to be applied on a partition is a'
+            ' shift of the partition. If yes, don\'t apply the rule.')
+
+    parser.add_argument('--depth_first', '-df', action='store_true',
+            help='instead of applying the algorithm linearly, applies'
+            ' it depth-first. Expensive memory-wise.')
 
     # COMPUTE ARGS
     args = parser.parse_args()
-    print(args)
-    cb = configuration_builder().with_verbose(args.verbose)
-    cb.with_max_iterations(args.max_iterations)
-    cb.with_no_cycles(args.no_cycles)
+
+    hb = handler_builder()
+    hb.with_pattern(args.pattern)
+    hb.with_max_iterations(args.max_iterations)
+    hb.with_verbose(args.verbose)
+    hb.with_check_cycles(args.check_cycles)
+    hb.with_check_shifts(args.check_shifts)
+    handler = hb.build()
+
+    if handler is None:
+        print('something was wrong with your settings.')
+        sys.exit(0)
+
+    if args.verbose == 0:
+        logging.basicConfig(format='%(message)s', level=logging.WARNING)
+    elif args.verbose == 1:
+        logging.basicConfig(format='%(message)s', level=logging.INFO)
+    elif args.verbose == 2:
+        logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+
+    logging.warning(args)
 
     input_strings = []
     algorithms = []
+
     # verifying mutual exclusion and mutual inclusion for input_string
     # and algorithm input
     if not ((args.input is not None)
-            ^ (args.multiplier is not None)
-                and (args.random_strings is not None)
+            ^ ((args.multiplier is not None)
+                and (args.random_strings is not None))
             ^ (args.strings_file is not None)):
         print('invalid string input! make sure to only use one of the'
                 ' detailed input methods.')
@@ -123,9 +159,9 @@ def main():
 
     # actually inputting algorithms
     if args.algorithm is not None:
-        alg = algo()
+        alg = []
         for rule in args.algorithm:
-            alg.add_rule(rule)
+            alg.append(rule)
         algorithms.append(alg)
     elif ((args.num_of_random_algorithms is not None)
     and (args.num_of_rules is not None)):
@@ -138,29 +174,29 @@ def main():
     elif args.algorithms_file:
         alg_strings = fr.readlines(args.algorithms_file)
         for alg_string in alg_strings:
-            rules = alg_string.split()
-            alg = algo()
-            for rule in rules:
-                alg.add_rule(rule)
+            alg = alg_string.split()
             algorithms.append(alg)
-
     else:
         print('invalid algorithm input! make sure to only use one of '
         'the detailed input methods.')
         sys.exit(0)
 
+
+    # running the algorithms
     for alg in algorithms:
-        valid = True
         for string in input_strings:
-            cb.with_alg(alg)
-            cb.with_committee(committee(string, args.pattern))
-            conf = cb.build()
-            if not ta.linear_algorithm(conf):
-                valid = False
-                break
+            handler.clear()
+            valid = True
+            if args.depth_first:
+                if not ta.DFS_algorithm(handler, alg, committee(string, len(args.pattern))):
+                    valid = False
+                    break
+            else:
+                if not ta.linear_algorithm(handler, alg, committee(string, len(args.pattern))):
+                    valid = False
+                    break
         if valid:
-            print("Algo " + str(conf.alg.rules.values())[11:]
-                    + " succeeded ")
+            print("Algo " + str(alg) + " succeeded!")
 
 # don't call main unless the script is called directly.
 if __name__ == '__main__':

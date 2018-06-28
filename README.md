@@ -6,7 +6,7 @@
 * **Examples**
 * **Notes on the design and the implementations**
 
-# Requirements: 
+# Requirements:
 * python3.6+
 * bitarray: install with `pip3 install bitarray`
 
@@ -16,7 +16,7 @@
 `python3 cli.py [pattern] [input_string options] [algorithms options] [extra configurations]`
 
 ### pattern:
-Some binary string to be reached by the algorithms. 
+Some binary string to be reached by the algorithms.
 
 Example: `000111`
 
