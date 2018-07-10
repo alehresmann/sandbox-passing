@@ -1,26 +1,33 @@
 import sys
 import logging
+import numpy as np
+import pandas as pd
+
 from bitarray import bitarray
 from committee import committee
 
 
 class committee_handler:
-    def __init__(self, pattern: str, max_iterations: int, verbose: bool, check_cycles: bool, check_shifts: bool):
+    def __init__(self, pattern: str, max_iterations: int, verbose: bool,
+            check_cycles: bool, check_shifts: bool, full_tree: bool, generate_image: bool):
         self.pattern = pattern
         self.max_iterations = max_iterations
         self.verbose = verbose
         self.check_cycles = check_cycles
         self.check_shifts = check_shifts
-
-        self.to_do_committees = set()
-        self.past_committees = set()
+        self.full_tree = full_tree
+        self.generate_image = generate_image
+        self.valid = False
+        self.valid_committee = -1
 
     def _get_shifted_bitarray(self, arr: bitarray, shift_by: int):
         return bitarray(arr[shift_by:] + arr[:shift_by])
 
     def shift_committee(self, c: committee, shift_by: int) -> committee:
         config = self._get_shifted_bitarray(c.configuration, shift_by)
-        return committee(config, c.window_size, c.identifier + 1, c.identifier)
+        new = committee(config, c.window_size, c.print_nicely())
+        new.reached_by = 'shift'
+        return new
 
     def _apply_rule_to_bitarray(self, arr: bitarray, partition_index: int, rule: str):
         window_size = len(rule)
@@ -30,12 +37,14 @@ class committee_handler:
         config.extend(arr[(partition_index + 1) * window_size:])
         return config
 
-    def apply_alg_to_committees(self, c: committee, partition_indices: list, alg: list):
-        new = committee(c.configuration, c.window_size, c.identifier + 1, c.identifier)
+    def apply_alg_to_committee(self, c: committee, partition_indices: list, alg: list):
+        new = committee(c.configuration, c.window_size, c.print_nicely())
+        new.reached_by = 'alg on: ' + str(partition_indices)
         for index in partition_indices:
             partition = new.get_partition(index) # the length of the rule is the window size
             for rule in alg:
-                if partition.count(0) == rule.count('0'):
+                # if partition has same num of 0s as in the rule but isnt exactly the same as the rule
+                if partition.count(0) == rule.count(0):
                     new.configuration = self._apply_rule_to_bitarray(new.configuration, index, rule)
         return new
 
@@ -46,20 +55,15 @@ class committee_handler:
         for i in range(0, len(config), window_size):
             if (config[i:] + config[:i]) == other:
                 return True
-        #print(str(config)[10:-2] + ' not eq to ' + str(other)[10:-2])
         return False
 
-    def is_in_past(self, c: committee):
-        configs = [committee.configuration for committee in self.past_committees]
-        for past in self.past_committees:
-            if self._bitarrays_equals(c.configuration, past.configuration, len(self.pattern)):
-                logging.info('cycle:\t' + str(c) +' already reached at ' + str(past.identifier + 1))
+    def is_in_list(self, c: committee, cd: dict):  # cd = committee_dictionary
+        rotations = c.get_all_equal_bitarrays()
+        for rotation in rotations:
+            if rotation.to01() in cd:
+                #logging.info('cycle:\t' + c.print_nicely() +' already reached ')   #TODO
                 return True
         return False
-
-    def clear(self):
-        self.to_do_committees.clear()
-        self.past_committees.clear()
 
 class handler_builder:
     def __init__(self):
@@ -89,7 +93,15 @@ class handler_builder:
         self.check_shifts = check_shifts
         return self
 
+    def with_full_tree(self, full_tree: bool):
+        self.full_tree = full_tree
+        return self
+
+    def with_generate_image(self, generate_image: bool):
+        self.generate_image = generate_image
+        return self
+
     def build(self):
         if self.pattern is None or self.max_iterations == 0:
             return None
-        return committee_handler(self.pattern, self.max_iterations, self.verbose, self.check_cycles, self.check_shifts)
+        return committee_handler(self.pattern, self.max_iterations, self.verbose, self.check_cycles, self.check_shifts, self.full_tree, False)

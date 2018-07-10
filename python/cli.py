@@ -1,24 +1,23 @@
-# input:    [#0_rule_1] [pattern_rule_1] [#0_rule_2] [pattern_rule_2]
-#           [pattern to be reached] [input string] [max_iterations]
-#           [verbose]
-
 # Assumes the length of the pattern is also the window size.
 # In other words, assumes w = t
 
 # verbosity levels:
-#    minimal    = 0
-#    info       = 1
-#    debug      = 2
+#    minimal    = 0  , only prints successful algs
+#    info       = 1  , also prints alg failure causes
+#    debug      = 2  , also prints every iteration of every alg
 
 import sys
 import argparse
 import logging
+
+from bitarray import bitarray
 
 from committee import committee
 from committee_handler import committee_handler, handler_builder
 import generators as gen
 import test_algorithm as ta
 import filereader as fr
+from grapher import graph_tree
 
 
 def main():
@@ -39,13 +38,13 @@ def main():
     parser.add_argument('--input', '-i', type=str,
             help='The input string to test the algorithm(s) on.')
 
-    # XOR these
+    # and/or these
     parser.add_argument('--multiplier', '-m', type=int,
             help='the multiplier of the randomly generated string')
     parser.add_argument('--random_strings','-rs', type=int, help='the'
         'number of strings to be randomly generated and tested upon')
 
-    # XOR this
+    # and/or this
     parser.add_argument('--strings_file','-sf', type=str,
             help='the name of the file containing strings that must be'
             'tested')
@@ -56,16 +55,16 @@ def main():
     parser.add_argument('--algorithm', '-a', type=str, nargs='+',
             help='the particular algorithm to test')
 
-    # XOR these
+    # and/or these
     parser.add_argument('--num_of_random_algorithms', '-nra', type=int,
             help='the number of random algorithms to generate')
     parser.add_argument('--num_of_rules', '-nr', type=int,
             help='the number of rules for generating random algorithms')
 
-    # XOR this
+    # and/or this
     parser.add_argument('--all_algorithms','-all', action='store_true')
 
-    # XOR this
+    # and/or this
     parser.add_argument('--algorithms_file', '-af', help='runs all'
             ' algorithms contained in a given file')
 
@@ -92,7 +91,17 @@ def main():
             help='instead of applying the algorithm linearly, applies'
             ' it depth-first. Expensive memory-wise.')
 
+    parser.add_argument('--full_tree', '-ft', action='store_true',
+            help='when using depth_first, generate the full tree instead'
+            'of stopping when the pattern is reached')
+
+    # not finished
+    #parser.add_argument('--generate_image', '-img', action='store_true',
+    #       help='when using depth_first, generate a visual of the graph'
+    #        'generated. May take a long time.')
     # COMPUTE ARGS
+
+
     args = parser.parse_args()
 
     hb = handler_builder()
@@ -101,6 +110,8 @@ def main():
     hb.with_verbose(args.verbose)
     hb.with_check_cycles(args.check_cycles)
     hb.with_check_shifts(args.check_shifts)
+    hb.with_full_tree(args.full_tree)
+    #hb.with_generate_image(args.generate_image)
     handler = hb.build()
 
     if handler is None:
@@ -121,28 +132,33 @@ def main():
 
     # verifying mutual exclusion and mutual inclusion for input_string
     # and algorithm input
-    if not ((args.input is not None)
-            ^ ((args.multiplier is not None)
-                and (args.random_strings is not None))
-            ^ (args.strings_file is not None)):
-        print('invalid string input! make sure to only use one of the'
-                ' detailed input methods.')
+    if (args.multiplier is not None) ^ (args.random_strings is not None):
+        print('invalid string input! If you use random strings, don\'t '
+        'forget to specify the multiplier.')
         sys.exit(0)
 
-    if not ((args.algorithm is not None)
-            ^ (((args.num_of_random_algorithms is not None)
-                and (args.num_of_rules is not None))
-                or ((args.all_algorithms == True)
-                    and (args.num_of_rules is not None)))
-            ^ (args.algorithms_file is not None)):
-        print('invalid algorithm input! make sure to only use one of'
-        ' the detailed input methods.')
+    # if (num of rules) xor ((all algs) xor (random algs))
+    if ((args.num_of_rules is not None) ^ ((args.all_algorithms)
+        ^ (args.num_of_random_algorithms is not None))):
+        print('invalid algorithm input! if you specify all algs or '
+                'random algs, don\'t forget to specify the number of '
+                'rules.')
+        sys.exit(0)
+
+    # verifying full_tree argument use:
+    if args.full_tree and not args.depth_first:
+        print('You cannot ask to generate a full tree without using'
+                ' the depth-first (-df) algorithm!')
         sys.exit(0)
 
     # actually inputting input_string
     if args.input is not None:
         input_strings.append(args.input)
-    elif (args.multiplier is not None
+
+    if args.strings_file is not None:
+        input_strings = fr.readlines(args.strings_file)
+
+    if (args.multiplier is not None
     and args.random_strings is not None):
         string = ('0'* args.pattern.count('0') + '1'
                 * args.pattern.count('1'))
@@ -150,53 +166,43 @@ def main():
         for i in range(0, args.random_strings):
             string = gen.shuffle(string)
             input_strings.append(string)
-    elif args.strings_file is not None:
-        input_strings = fr.readlines(args.strings_file)
-    else:
-        print('invalid string input! make sure to only use one of the'
-                ' detailed input methods.')
-        sys.exit(0)
 
     # actually inputting algorithms
     if args.algorithm is not None:
         alg = []
         for rule in args.algorithm:
-            alg.append(rule)
+            alg.append(bitarray(rule))
         algorithms.append(alg)
-    elif ((args.num_of_random_algorithms is not None)
+
+    if args.algorithms_file:
+        alg_strings = fr.readlines(args.algorithms_file)
+        for alg_string in alg_strings:
+            alg = [bitarray(rule) for rule in alg_string.split()]
+            algorithms.append(alg)
+
+    if ((args.num_of_random_algorithms is not None)
     and (args.num_of_rules is not None)):
         for i in range(0, args.num_of_random_algorithms):
             algorithms.append(gen.generate_random_algorithm(
-                len(args.pattern), args.num_of_rules))
-    elif args.all_algorithms and args.num_of_rules is not None:
+                int(args.num_of_rules), len(args.pattern)))
+
+    if args.all_algorithms and args.num_of_rules is not None:
         algorithms = gen.generate_all_algorithms(args.num_of_rules,
                 len(args.pattern))
-    elif args.algorithms_file:
-        alg_strings = fr.readlines(args.algorithms_file)
-        for alg_string in alg_strings:
-            alg = alg_string.split()
-            algorithms.append(alg)
-    else:
-        print('invalid algorithm input! make sure to only use one of '
-        'the detailed input methods.')
-        sys.exit(0)
 
 
     # running the algorithms
     for alg in algorithms:
+        valid = True
         for string in input_strings:
-            handler.clear()
-            valid = True
             if args.depth_first:
-                if not ta.DFS_algorithm(handler, alg, committee(string, len(args.pattern))):
-                    valid = False
-                    break
+                valid = ta.DFS_algorithm(handler, alg, committee(string, len(args.pattern)))
             else:
-                if not ta.linear_algorithm(handler, alg, committee(string, len(args.pattern))):
-                    valid = False
-                    break
+                valid = ta.linear_algorithm(handler, alg, committee(string, len(args.pattern)))
+            if not valid:
+                break
         if valid:
-            print("Algo " + str(alg) + " succeeded!")
+            print("Algo " + ' '.join(rule.to01() for rule in alg) + " succeeded!")
 
 # don't call main unless the script is called directly.
 if __name__ == '__main__':
