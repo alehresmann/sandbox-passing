@@ -18,6 +18,7 @@ class settings:
         self.pattern = pattern
         self.robot_count = int(len(inpt) / (len(pattern) * 2))
         self.max_iteration = max_iteration
+
         # vars necessary for running the algo itself
         self.robots = []
         self.iteration_count = 0
@@ -38,7 +39,7 @@ class settings:
         robot_count = 0
         for window, sandbox in self._pairwise(windows):
             robot_count += 1
-            self.robots.append(robot(self.pattern, window, sandbox, robot_count))
+            self.robots.append(robot(self.pattern, window, sandbox, robot_count, int(len(window)/2)))
 
     def is_patterned(self):
         for rob in self.robots:
@@ -72,17 +73,22 @@ class settings:
                     rob.sandbox.sort()
                     rob.rearrange_from_sandbox()
                 if not rob.has_valid_window():
-                    rob.expulse_window()
+                    rob.expulse_count += 1
+                    if rob.expulse_count == rob.expulse_lim:
+                        if rob.window.count(True) < int(len(rob.window)/2):
+                            rob.expulsing = True
+                            rob.expulse_count = 0
             logging.debug(self.print_robots())
 
             logging.debug('swapping sandboxes and windows if needed...')
             for rob in self.robots:
                 if rob.dont_swap:
                     rob.dont_swap = False
-                    break
-                if rob.has_valid_window() and not rob.has_valid_sandbox():
-                    rob.rearrange_sandbox()
+                elif rob.expulsing:
                     rob.swap()
+                elif rob.has_valid_window() and not rob.has_valid_sandbox():
+                    rob.swap()
+                    rob.rearrange_window()
 
             logging.debug(self.print_robots())
 

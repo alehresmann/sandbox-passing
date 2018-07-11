@@ -4,13 +4,17 @@ import logging
 # r = num of robots. w = size of window.
 
 class robot:
-    def __init__(self, pattern: bitarray, window=None, sandbox=None, ID=-1):
+    def __init__(self, pattern: bitarray, window=None, sandbox=None, ID=-1, expulse_lim = 5):
         self.ID = ID
         self.pattern = pattern.copy()
         window_size = len(pattern)
         self.window  = bitarray('0' * window_size)
         self.sandbox = bitarray('0' * window_size)
+        self.expulse_lim = expulse_lim
+        self.expulse_count = 0
+        self.expulsing = False
         self.dont_swap = False
+
         if window is not None:
             self.replace_window(window)
             if sandbox is not None:
@@ -44,12 +48,6 @@ class robot:
         if self.sandbox != self.pattern:
             self.sandbox.sort()
 
-    def expulse_window(self):
-        if self.window.count(True) < int(len(self.window)/2):
-            self.swap()
-            logging.debug('expulsing 1\'s from R' + str(self.ID))
-            self.dont_swap = True
-
     def rearrange_window(self):  # O(w^2)
         for i in range(0, len(self.window)):
             if self.window[i] != self.pattern[i]:
@@ -58,16 +56,6 @@ class robot:
                     if self.window[j] == need:
                         self.window[j] = not need
                         self.window[i] = need
-                        break
-
-    def rearrange_sandbox(self):  # O(w^2)
-        for i in range(0, len(self.window)):
-            if self.sandbox[i] != self.pattern[i]:
-                need = self.pattern[i]
-                for j in range(i + 1, len(self.sandbox)):
-                    if  self.sandbox[j] == need:
-                        self.sandbox[j] = not need
-                        self.sandbox[i] = need
                         break
 
     def rearrange_from_sandbox(self):   # O(wlog(w) + O(w))  --> O(wlogw)
@@ -88,6 +76,7 @@ class robot:
         temp = self.sandbox.copy()
         self.sandbox = other.sandbox
         other.sandbox = temp
-        if self.dont_swap:
+        if self.expulsing:
             other.dont_swap = True
             self.dont_swap = False
+            self.expulsing = False
