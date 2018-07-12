@@ -13,8 +13,9 @@ class robot:
         self.pattern_zero_count = pattern.count(0)
         self.window_zero_count = window.count(0)
         self.sandbox_zero_count = sandbox.count(0)
-        self.consecutive_valid_sandboxes = 0
+        self.had_valid_sandbox = False
         self.num_of_other_bots = num_of_other_bots
+        self.satisfaction_array = bitarray('0' * num_of_other_bots)
         self.last_invalid_seen = 0
         self.is_satisfied = False
         self.done = False
@@ -60,7 +61,7 @@ class robot:
         self.window, self.sandbox = self.sandbox, self.window
         self.window_zero_count, self.sandbox_zero_count = self.sandbox_zero_count, self.window_zero_count
 
-    def trade_sandbox_with(self, other):  #robot
+    def trade_sandbox_with(self, other):  # other: robot
         self.sandbox, other.sandbox = other.sandbox, self.sandbox
         self.sandbox_zero_count, other.sandbox_zero_count = other.sandbox_zero_count, self.sandbox_zero_count
 
@@ -68,7 +69,18 @@ class robot:
         if self.has_valid_window() and self.has_valid_window():
             self.is_satisfied = True
 
+    def send_satisfaction_array(self, other):
+        self.satisfaction_array[self.ID] = (self.has_valid_window() and self.has_valid_window())
+        other.satisfaction_array = self.satisfaction_array.copy()
+
+    def _reach_pattern(self, arr: bitarray): #  O(5 + 4 + 3 + 2 + 1) 1,3,6,10,15,21,28,
+        for i in range(0, len(arr)):
+            if arr[i] != self.pattern[i]:
+                for j in range(i + 1, len(arr)):
+                    if arr[j] == self.pattern[i] and arr[j] != self.pattern[j]:
+                        arr[i], arr[j] = arr[j], arr[i]
+        return arr
+
     def reach_pattern(self):
-        True
-        #self.window  = self.pattern
-        #self.sandbox = self.pattern
+        self.window = self._reach_pattern(self.window)
+        self.sandbox = self._reach_pattern(self.sandbox)
