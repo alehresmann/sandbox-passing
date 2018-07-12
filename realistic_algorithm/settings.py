@@ -71,30 +71,28 @@ class settings:
 
             logging.debug('verifying validity of entire string')
             for bot in self.robots:
-                if  bot.satisfaction_array.all():
+                if  bot.satisfaction_array.all():  # if all bits in the array are 1
                     bot.reach_pattern()  # reorganise local window and sandbox into pattern
                     bot.done = True
 
             logging.debug('moving things locally:')
             for bot in self.robots:
-                    if bot.has_valid_sandbox():
-                        bot.had_valid_sandbox = True
-                    else:
-                        bot.had_valid_sandbox = False
+                    if not bot.has_valid_sandbox():
                         if not bot.has_valid_window():
                             bot.rearrange_from_sandbox()
             logging.debug(self.print_robots())
 
             logging.debug('swapping sandbox and window locally if needed:')
             for bot in self.robots:
-                if bot.done or bot.is_satisfied:
-                    continue
-                elif bot.had_valid_sandbox:  #bot.num_of_other_bots:
+                if bot.has_valid_sandbox():
                     if bot.window_zero_count > bot.pattern_zero_count:
-                        # someone else is stuck with my 1s. I expulse my window and how they will catch it.
+                        # someone else is stuck with my 1s. I expulse my window
+                        # and hope they will catch it.
                         bot.swap()
-                elif bot.window_zero_count == bot.pattern_zero_count and bot.sandbox_zero_count != bot.pattern_zero_count:
-                    # my window is satisfied, but my sandbox is not. swap both and wait to receive an invalid sandbox that I may take from
+                elif bot.window_zero_count == bot.pattern_zero_count \
+                and bot.sandbox_zero_count != bot.pattern_zero_count:
+                    # my window is satisfied, but my sandbox is not. swap both and
+                    # wait to receive an invalid sandbox that I may take from
                     bot.swap()
             logging.debug(self.print_robots())
 
@@ -103,6 +101,7 @@ class settings:
                 self.robots[0].trade_sandbox_with(bot)
             logging.debug(self.print_robots())
 
+            logging.debug('passing around satisfaction array')
             for i in range(0, len(self.robots) - 1):
                 self.robots[i].send_satisfaction_array(self.robots[i+1])
             self.robots[-1].send_satisfaction_array(self.robots[0])
@@ -116,12 +115,12 @@ class settings:
                 break
 
         logging.info('FINISHED: iteration ' + str(self.iteration_count))
-        for rob in self.robots:
-            logging.info(str(rob.ID) + ':\t' + str(rob))
+        for bot in self.robots:
+            logging.info(str(bot.ID) + ':\t' + str(bot))
         logging.debug('VERIFYING...')
-        for rob in self.robots:
-            if rob.window != rob.pattern or rob.sandbox != rob.pattern:
-                print('ERROR AT ' + str(rob.ID))
+        for bot in self.robots:
+            if bot.window != bot.pattern or bot.sandbox != bot.pattern:
+                print('ERROR AT ' + str(bot.ID))
                 return False
-        logging.info('num of iterations: ' + str(self.iteration_count) + '\ninput string of length ' + str(len(self.inpt)) + '\n' + str(len(self.robots)) + ' robots with windows of size ' + str(len(self.robots[0].window)) + '\n\n')
+        print('num of iterations: ' + str(self.iteration_count)) #+ '\ninput string of length ' + str(len(self.inpt)) + '\n' + str(len(self.robots)) + ' robots with windows of size ' + str(len(self.robots[0].window)) + '\n\n')
         return True

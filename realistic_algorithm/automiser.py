@@ -17,15 +17,15 @@ def run_this_many_times(times: int, string_length: int, pattern_length: int, max
     for i in range(0, times):
         random_str = _shuffle('0' * int(string_length / 2) + '1' * int(string_length / 2))
         random_pattern = _shuffle('0' * int(pattern_length / 2) + '1' * int(pattern_length / 2))
-        print('attempting to reach pattern ' + random_pattern + ' from ' + random_str)
+        logging.info('attempting to reach pattern ' + random_pattern + ' from ' + random_str)
 
         run = settings(bitarray(random_str), bitarray(random_pattern), max_iterations)
         run.assign_windows_to_robots()
         attempt = run.algorithm()
         if attempt == False:
-            print('FAILED TO REACH ' + random_pattern + ' from ' + random_str +'. Perhaps try increasing the max iteration limit?')
+            logging.warning('FAILED TO REACH ' + random_pattern + ' from ' + random_str +'. Perhaps try increasing the max iteration limit?')
             return
-    print('all strings reached the pattern requested!')
+    logging.warning('all strings reached the pattern requested!')
 
 
 def run_on_this_particular_input(inpt_string: str, pattern:str, max_iterations: int):
@@ -33,7 +33,7 @@ def run_on_this_particular_input(inpt_string: str, pattern:str, max_iterations: 
     run.assign_windows_to_robots()
     attempt = run.algorithm()
     if attempt == False:
-        print('FAILED TO REACH ' + pattern + ' from ' + inpt_string +'. Perhaps try increasing the max iteration limit?')
+        logging.warning('FAILED TO REACH ' + pattern + ' from ' + inpt_string +'. Perhaps try increasing the max iteration limit?')
         return
 
 verbose = int(sys.argv[5])
