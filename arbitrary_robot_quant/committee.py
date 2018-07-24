@@ -82,5 +82,5 @@ class committee:
             if sub != self.pattern:
                 print('ERROR AT ' + str(i))
                 return False
-        print('VALID!')
+        logging.info('VALID!')
         return True

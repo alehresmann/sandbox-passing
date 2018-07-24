@@ -8,7 +8,7 @@ def _shuffle(string):
     return ''.join(random.sample(string, len(string)))
 
 def run_this_many_times(times: int, max_iterations: int):
-    string_length = 32
+    string_length = 36
     pattern_length = 4
     if string_length % pattern_length != 0:
         print('error with pattern length and string length!')

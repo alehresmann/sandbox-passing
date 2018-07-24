@@ -25,7 +25,7 @@ class robot:
 
     def check_local_validity(self):
         if self.has_valid_window() and self.has_valid_sandbox():
-            self.consecutive_valid_windows_seen += 1
+            self.consecutive_valid_windows_seen += 2
         else:
             self.consecutive_valid_windows_seen = 0
 
