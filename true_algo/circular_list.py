@@ -1,8 +1,8 @@
-# a circular doubly-linked linked list. Maybe I should just use a deque?
+# A circular doubly-linked linked list, with minor modifications for printing.
 
 from colorama import Fore
 
-# no black because unreadable on dark term. white reserved for no robots.
+# no black because unreadable on dark terminal. white reserved for no robots.
 colours = [ Fore.RED, Fore.GREEN, Fore.YELLOW, Fore.BLUE, Fore.MAGENTA, Fore.CYAN ]
 
 class node:
@@ -50,15 +50,13 @@ class circular_list:
 
     def __str__(self):
         node = self.first_node
-        count = 0
         ret = ''
         for i in range(0, len(self)):
             if node.owned_by is None:
                 ret += Fore.WHITE
             else:
                 ret += colours[node.owned_by.ID % len(colours)]
-            ret += str(int(node.data == True))
+            ret += str(int(node.data is True))
             node = node.next
         ret += Fore.WHITE
         return ret
-

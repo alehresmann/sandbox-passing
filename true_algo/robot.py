@@ -4,7 +4,7 @@ import logging
 from bitarray import bitarray
 
 from circular_list import node
-from command import command, local_rearrange_command, swap_command, move_command, reach_pattern_command, update_state_command
+from command import local_rearrange_command, swap_command, move_command, reach_pattern_command, update_state_command
 
 # Best to think of the robots as state machines
 
@@ -26,7 +26,29 @@ class robot:
         self.update_window_and_sandbox()
 
         self.commands = []
-        self.has_computed = False
+
+        # for statistics. All of these except the iterations count is only touched in commands
+        self.total_switches_done = 0
+        self.total_moves_done = 0
+        self.total_time_waited = 0
+        self.total_iterations_gone_through = 0
+
+    def __str__(self):
+        window_data = [w.data for w in self.window]
+        sandbox_data = [s.data for s in self.sandbox]
+        return 'R'+str(self.ID) + ',\t' + ''.join(map(str,map(int,window_data))) + ':' \
+                + ''.join(map(str,map(int, sandbox_data))) +',\tstate: ' + str(self.state) \
+                + ' , consecutive_valid_windows_seen: ' + str(self.consecutive_valid_windows_seen) \
+                + ',\tk: ' + str(self.k) + ', ' \
+                + str(len(self.commands)) + ' commands in queue, next is ' \
+                + str(next(iter(self.commands), None))
+
+    def final_state(self):
+        return 'R' + str(self.ID) + '\t, total switches: ' + str(self.total_switches_done) \
+                + '\ttotal moves: ' + str(self.total_moves_done) + '\ttotal iterations: ' \
+                + str(self.total_iterations_gone_through) + '\ttime waited: ' \
+                + str(self.total_time_waited) + '\tconsecutive slices seen: ' \
+                + str(self.consecutive_valid_windows_seen) + '\t state: ' + str(self.state)
 
     def has_valid_window(self):
         return [w.data for w in self.window].count(False) == self.pattern.count(0)
@@ -51,18 +73,6 @@ class robot:
             self.sandbox.append(temp)
             temp = temp.next
 
-    def update_state(self):  # instantaneous operation
-        # checks if window and sandbox is valid, adds to consecutive slices, sets states.
-        if self.has_valid_window() and self.has_valid_sandbox():
-            self.consecutive_valid_windows_seen += 1
-        else:
-            logging.debug('window: ' + str(self.has_valid_window()) + ', sandbox: ' + str(self.has_valid_sandbox()))
-            self.consecutive_valid_windows_seen = 0
-
-        if self.consecutive_valid_windows_seen >= self.k:
-            self.state += 1
-            self.consecutive_valid_windows_seen = 0
-
     def can_rearrange(self):
         window_zero_count = [w.data for w in self.window].count(False)
         sandbox_zero_count = [s.data for s in self.sandbox].count(False)
@@ -73,22 +83,12 @@ class robot:
             return True
         return False
 
-    def __str__(self):
-        window_data = [w.data for w in self.window]
-        sandbox_data = [s.data for s in self.sandbox]
-        return 'R'+str(self.ID) + ',\t' + ''.join(map(str,map(int,window_data))) + ':' \
-                + ''.join(map(str,map(int, sandbox_data))) +',\tstate: ' + str(self.state) \
-                + ' , consecutive_valid_windows_seen: ' + str(self.consecutive_valid_windows_seen) \
-                + ',\tk: ' + str(self.k) + ', ' \
-                + str(len(self.commands)) + ' commands in queue, next is ' \
-                + str(next(iter(self.commands), None))
-
     def swap(self):
         for i in range(0, self.slice_size):
             self.commands.append(swap_command(self, i))
 
     def algo_iter(self):
-        if self.state > 1:  # done
+        if self.state > 2:  # done
             return
 
         if self.state == 0:
@@ -115,4 +115,5 @@ class robot:
         # move
         for i in range(0, self.slice_size):
             self.commands.append(move_command(self, True))
+        self.total_iterations_gone_through += 1
         self.commands.append(update_state_command(self))
