@@ -21,17 +21,16 @@ class configuration:
     def __str__(self):
         return str(self.configuration)
 
-    def attach_bot(self, index: int):
+    def attach_bot(self, index: int, is_synchronised=False):
         check = self.configuration.get_node_at(index)
         for i in range(0, self.slice_size * 2):
             if check.owned_by is not None:
-                logging.warning('Can\'t place bot here! Overlapping with R'+ str(check.owned_by))
-                return
+                raise ValueError('Can\'t place bot at ' +str(index) +'! Overlapping with R'+ str(check.owned_by))
             check = check.next
 
         temp = self.configuration.get_node_at(index)
 
-        bot = robot(len(self.bots), self.pattern, temp, int(len(self.configuration) / self.slice_size))
+        bot = robot(len(self.bots), self.pattern, temp, int(len(self.configuration) / self.slice_size), is_synchronised)
         for i in range(0, self.slice_size * 2):
             temp.owned_by = bot
             temp = temp.next
@@ -55,30 +54,11 @@ class configuration:
         return True
 
     def print_robots_final(self):
-        colours = [ Fore.RED, Fore.GREEN, Fore.YELLOW, Fore.BLUE, Fore.MAGENTA, Fore.CYAN ]
+        colours = [ Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW, Fore.MAGENTA, Fore.CYAN ]
         logging.warning(Fore.WHITE + 'STATS:')
         for bot in self.bots:
             logging.warning(colours[bot.ID % len(colours)] + bot.final_state())
         logging.warning(Fore.WHITE)
-
-    def run_algo_inline(self, max_iterations: int):
-        logging.basicConfig(format='%(message)s', level=logging.INFO)
-        print(self, end = '\r')
-
-        for i in range(0, max_iterations):
-            self.run_iteration()
-            time.sleep(0.1)
-            print(self, end = '\r')
-            if self.all_done():
-                break
-
-        print ('VERIFYING...')
-        if check_validity():
-            print('\nVALID!')
-            return True
-
-        print('\nran out of iterations...')
-        return
 
     def run_algo(self, max_iterations: int):
         logging.info(self)
@@ -92,11 +72,24 @@ class configuration:
 
         if self.check_validity():
             print('\nVALID!')
-            return True
+        else:
+            raise ValueError('ERROR! did I run out of rounds or claim  to be done when I wasn\'t?')
 
-        if tick_count == max_iterations:
-            print('\nran out of iterations...')
-            return False
+    def run_synchronised_algo(self, max_iterations: int):
+        logging.info(self)
+        tick_count = 0
+        while tick_count < max_iterations:
+            self.run_synchronised_round()
+            logging.info(self)
+            if self.all_done():
+                break
+            tick_count += 2 * len(self.pattern) + int(len(self.pattern) / 2)
+
+        if self.check_validity():
+            print('\nVALID!')
+        else:
+            self.print_robots_final()
+            raise ValueError('ERROR! did I run out of rounds or claim  to be done when I wasn\'t?')
 
     def run_iteration(self):
         for bot in self.bots:
@@ -111,3 +104,21 @@ class configuration:
                 else:
                     done_one_op = True
             logging.debug(bot)
+
+    def run_synchronised_round(self):
+        for bot in self.bots:
+            done_move = False
+            while not done_move:
+                if len(bot.commands) == 0:
+                    bot.algo_iter()
+                if len(bot.commands) > 0:
+                    if len(bot.commands) > 1 and str(bot.commands[-2]) == 'move':
+                        done_move = True
+                    for i in range(0, len(bot.commands)):
+                        com = bot.commands.pop(0)
+                        com.execute()
+
+                else:
+                    done_move = True
+                logging.debug(bot)
+

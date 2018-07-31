@@ -28,6 +28,10 @@ class local_rearrange_command(command):
             want = True
         elif window_zero_count > pattern_zero_count and sandbox_zero_count < self.bot.slice_size:
             want = False
+        else:
+            logging.warning('tried to rearrange but couldn\'t! something went wrong here! R' + str(self.bot.ID))
+            sys.exit(0)
+
         for node in self.bot.window:
             if node.data == want:
                 for node_s in self.bot.sandbox:
@@ -71,7 +75,7 @@ class move_command(command):
             abandoned_node = self.bot.sandbox[-1]
             new_current_node = self.bot.current_node.prev
 
-        if new_node_to_add.owned_by is not None:
+        if new_node_to_add.owned_by is not None and not self.bot.is_synchronised:
                 self.bot.total_time_waited += 1
             # if one wants to include the code below, it would need to be stacked, that is, if a
             # robot R1 is blocking a robot R2 that is blocking a robot R3, R3 should push both R2 and R1, or none at all.
@@ -91,7 +95,6 @@ class move_command(command):
                 # to verify no one is behind me before doing a swap so that waiting is avoided?
                 self.bot.commands.insert(0,move_command(self.bot, self.forward))
                 return
-
         if abandoned_node.owned_by == self.bot:
             abandoned_node.owned_by = None
         self.bot.current_node = new_current_node

@@ -9,8 +9,9 @@ from command import local_rearrange_command, swap_command, move_command, reach_p
 # Best to think of the robots as state machines
 
 class robot:
-    def __init__(self, ID: int, pattern: bitarray, current_node: node, k: int):
+    def __init__(self, ID: int, pattern: bitarray, current_node: node, k: int, is_synchronised=False):
 
+        self.is_synchronised = is_synchronised
         self.ID = ID
         self.pattern = pattern
         self.current_node = current_node

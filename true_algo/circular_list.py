@@ -3,7 +3,7 @@
 from colorama import Fore
 
 # no black because unreadable on dark terminal. white reserved for no robots.
-colours = [ Fore.RED, Fore.GREEN, Fore.YELLOW, Fore.BLUE, Fore.MAGENTA, Fore.CYAN ]
+colours = [ Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW, Fore.MAGENTA, Fore.CYAN ]
 
 class node:
     def __init__(self):
