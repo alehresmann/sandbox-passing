@@ -83,7 +83,7 @@ class configuration:
             logging.info(self)
             if self.all_done():
                 break
-            tick_count += 2 * len(self.pattern) + int(len(self.pattern) / 2)
+            tick_count += 1
 
         if self.check_validity():
             print('\nVALID!')

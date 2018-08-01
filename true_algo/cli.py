@@ -109,9 +109,9 @@ def main():
         if args.config_size % args.pattern_size != 0:
             logging.warning('you didn\'t give a config size that divides perfectly into the pattern size!')
             sys.exit(0)
-        num_of_0s = random.randint(1, args.pattern_size - 1)
 
         for attempt in range(0, args.config_quant):
+            num_of_0s = random.randint(1, args.pattern_size - 1)
             pattern = ''.join(random.sample('0' * num_of_0s + '1' * (args.pattern_size - num_of_0s), args.pattern_size))
             config = ''.join(random.sample(pattern * int(args.config_size / args.pattern_size), args.config_size))
             c = configuration(pattern, config)
