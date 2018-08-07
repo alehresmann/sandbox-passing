@@ -78,7 +78,6 @@ class configuration:
 
     def run_round(self, synchronised):
         for bot in self.bots:
-            logging.debug(bot)
 
             if len(bot.commands) == 0:
                 bot.algo_round()
@@ -88,16 +87,19 @@ class configuration:
                 com.execute()
                 if not synchronised and com.count_as_op:
                     break
+            logging.debug(bot)
 
     def run_algo(self, max_iterations: int, synchronise=False):
-        logging.info(self)
-        round_count = 0
+        round_count = 1
+        logging.info('Round ' + str(round_count) + ':\t ' + str(self))
+        logging.debug('\n')
         while round_count < max_iterations:
             self.run_round(synchronise)
-            logging.info(self)
+            round_count += 1
+            logging.info('Round ' + str(round_count) + ':\t ' + str(self))
+            logging.debug('\n')
             if self.all_done():
                 break
-            round_count += 1
 
         if self.check_if_patterned():
             logging.warning('\nSUCCESS!')

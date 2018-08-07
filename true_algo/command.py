@@ -94,9 +94,13 @@ class update_state_command(command):  # as this should be done once every $p$ bi
         else:
             self.bot.consecutive_valid_windows_seen = 0
 
-        if self.bot.consecutive_valid_windows_seen >= self.bot.k:
-            self.bot.state += 1
-            print('STATE', self.bot.state)
-            if self.bot.state == 2:
+        if self.bot.state == 0:
+            if self.bot.consecutive_valid_windows_seen >= self.bot.k - 1:
+                self.bot.consecutive_valid_windows_seen = 0
+                self.bot.state = 1
+                self.bot.reached_satisfied_at = self.bot.total_rounds
+
+        elif self.bot.state == 1:
+            if self.bot.consecutive_valid_windows_seen >= self.bot.k:
+                self.bot.state = 2
                 self.bot.reached_done_at = self.bot.total_rounds
-            self.bot.consecutive_valid_windows_seen = 0

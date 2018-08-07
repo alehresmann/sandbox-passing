@@ -30,9 +30,10 @@ class robot:
         self.total_moves_done = 0
         self.total_time_waited = 0
         self.total_rounds = 0
+        self.reached_satisfied_at = -1
         self.reached_done_at = -1
 
-    def __str__(self):
+    def __str__(self):  # for debugging
         window_data = [w.data for w in self.window]
         sandbox_data = [s.data for s in self.sandbox]
         return 'R'+str(self.ID) + ',\t' + ''.join(map(str,map(int,window_data))) + ':' \
@@ -43,11 +44,13 @@ class robot:
                 + str(next(iter(self.commands), None))
 
     def final_state(self):
+        print(self)
         return 'R' + str(self.ID) + '\t, total switches: ' + str(self.total_switches_done) \
                 + '\ttotal moves: ' + str(self.total_moves_done) + '\ttotal rounds: ' \
                 + str(self.total_rounds) + '\ttime waited: ' \
                 + str(self.total_time_waited) + '\tconsecutive slices seen: ' \
                 + str(self.consecutive_valid_windows_seen) + '\t state: ' + str(self.state) \
+                + ', reached satisfied at round: ' + str(self.reached_satisfied_at) \
                 + ', reached done at round: ' + str(self.reached_done_at)
 
     def has_valid_window(self):
@@ -114,7 +117,6 @@ class robot:
         self.total_rounds += 1
 
         #compute
-        self.commands.append(update_state_command(self))
         if self.state == 0:
             if not self.has_valid_window() and not self.has_valid_sandbox():
                 self.local_rearrange()
@@ -131,3 +133,4 @@ class robot:
         for i in range(0, self.slice_size):
             self.commands.append(move_command(self, True))
 
+        self.commands.append(update_state_command(self))
