@@ -1,3 +1,6 @@
 __pycache__/
 *.txt
 efficient_rearrange_window.py
+stats/
+.gitignore
+proof/

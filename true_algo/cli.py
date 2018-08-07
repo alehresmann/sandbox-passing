@@ -12,6 +12,34 @@ from colorama import init
 
 from configuration import configuration
 
+def compute(config: str, pattern: str, pos_list: list, max_rounds: int, synchronise: bool, print_info: str):
+    try:
+        int(pattern, 2)
+        int(config, 2)
+    except:
+        raise AssertionError('You didn\'t give me binary strings for your pattern and/or your configuration!')
+
+    if pattern.count('0') != int(config.count('0') / (len(config) / len(pattern))):
+        raise AssertionError('Assure yourself you have the correct number of 1s and 0s in your config to reach the pattern!')
+
+    if max_rounds < 1:
+        raise AssertionError('Max rounds value must be greater than 1!')
+
+    c = configuration(pattern, config)
+    for pos in pos_list:
+        c.attach_bot(pos, synchronise)
+
+    if 'c' in print_info:
+        logging.warning('C_0:\n' + str(config))
+    if 'p' in print_info:
+        logging.warning('P:\n' + str(pattern))
+
+    c.run_algo(max_rounds, synchronise)
+
+    # printing extra info
+    if 's' in print_info:
+        logging.warning(c.get_robots_final())
+
 
 def main():
     parser = argparse.ArgumentParser(description='CLI for sandbox passing algos')
@@ -22,6 +50,9 @@ def main():
 
     parser.add_argument('--synchronise', '-s', action='store_true',
             help='whether or not robots are synchronised. Use when you have many robots relative to the config size.')
+
+    parser.add_argument('--print_info', '-pi', default='',
+            help='what you want to be printed as additional information.')
 
     # subparsers
     subparsers = parser.add_subparsers(title='subcommands - Use \'-h\' to find out more.',
@@ -68,8 +99,10 @@ def main():
             help = 'as its name suggests')
 
 
+    # processing
     args = parser.parse_args()
 
+    # verbose
     if args.verbose == 1:
         logging.basicConfig(format='%(message)s', level=logging.INFO)
     elif args.verbose == 2:
@@ -79,53 +112,25 @@ def main():
 
     logging.warning(args)
 
-    # processing
+    # running algo
     if args.command == 'particular':
-        try:
-            int(args.pattern, 2)
-            int(args.config, 2)
-        except:
-            logging.warning('you didn\'t give me binary strings for your pattern and/or your configuration!')
-            sys.exit(0)
-
-        if len(args.config) % len(args.pattern) != 0:
-            logging.warning('you didn\'t give me binary strings for your pattern and/or your configuration!')
-            sys.exit(0)
-
-        if args.pattern.count('0') != int(args.config.count('0') / (len(args.config) / len(args.pattern))):
-            logging.warning('assure yourself you have the correct number of 1s and 0s in your config to reach the pattern!')
-            sys.exit(0)
-
-        c = configuration(args.pattern, args.config)
-        for pos in args.robot_starts:
-            c.attach_bot(int(pos), args.synchronise)
-        if args.synchronise:
-            c.run_synchronised_algo(args.max_rounds)
-        else:
-            c.run_algo(args.max_rounds)
-        c.print_robots_final()
+        pos_list = [int(pos) for pos in args.robot_starts]
+        compute(args.config, args.pattern, pos_list, args.max_rounds, args.synchronise, args.print_info)
 
     elif args.command == 'random':
         if args.config_size % args.pattern_size != 0:
-            logging.warning('you didn\'t give a config size that divides perfectly into the pattern size!')
+            raise AssertionError('you didn\'t give a config size that divides perfectly into the pattern size!')
             sys.exit(0)
 
         for attempt in range(0, args.config_quant):
             num_of_0s = random.randint(1, args.pattern_size - 1)
             pattern = ''.join(random.sample('0' * num_of_0s + '1' * (args.pattern_size - num_of_0s), args.pattern_size))
             config = ''.join(random.sample(pattern * int(args.config_size / args.pattern_size), args.config_size))
-            c = configuration(pattern, config)
-            logging.warning(pattern)
-            logging.warning(config)
+            pos_list = []
             for i in range(0, args.robots_quant):
-                c.attach_bot(i * args.pattern_size * 2, args.synchronise)
+                pos_list.append(i * args.pattern_size * 2)
+            compute(config, pattern, pos_list, args.max_rounds, args.synchronise, args.print_info)
 
-            if args.synchronise:
-                c.run_synchronised_algo(args.max_rounds)
-            else:
-                c.run_algo(args.max_rounds)
-
-            c.print_robots_final()
 
 # don't call main unless the script is called directly.
 if __name__ == '__main__':

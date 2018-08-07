@@ -1,12 +1,9 @@
 import sys
-import logging
 
 from bitarray import bitarray
 
 from circular_list import node
-from command import local_rearrange_command, swap_command, move_command, reach_pattern_command, update_state_command
-
-# Best to think of the robots as state machines
+from command import switch_command, move_command, update_state_command
 
 class robot:
     def __init__(self, ID: int, pattern: bitarray, current_node: node, k: int, is_synchronised=False):
@@ -28,11 +25,12 @@ class robot:
 
         self.commands = []
 
-        # for statistics. All of these except the iterations count is only touched in commands
+        # for statistics. All of these except the rounds count is only touched in commands
         self.total_switches_done = 0
         self.total_moves_done = 0
         self.total_time_waited = 0
-        self.total_iterations_gone_through = 0
+        self.total_rounds = 0
+        self.reached_done_at = -1
 
     def __str__(self):
         window_data = [w.data for w in self.window]
@@ -46,22 +44,17 @@ class robot:
 
     def final_state(self):
         return 'R' + str(self.ID) + '\t, total switches: ' + str(self.total_switches_done) \
-                + '\ttotal moves: ' + str(self.total_moves_done) + '\ttotal iterations: ' \
-                + str(self.total_iterations_gone_through) + '\ttime waited: ' \
+                + '\ttotal moves: ' + str(self.total_moves_done) + '\ttotal rounds: ' \
+                + str(self.total_rounds) + '\ttime waited: ' \
                 + str(self.total_time_waited) + '\tconsecutive slices seen: ' \
-                + str(self.consecutive_valid_windows_seen) + '\t state: ' + str(self.state)
+                + str(self.consecutive_valid_windows_seen) + '\t state: ' + str(self.state) \
+                + ', reached done at round: ' + str(self.reached_done_at)
 
     def has_valid_window(self):
         return [w.data for w in self.window].count(False) == self.pattern.count(0)
 
     def has_valid_sandbox(self):
         return [s.data for s in self.sandbox].count(False) == self.pattern.count(0)
-
-    def has_patterned_window(self):
-        return ''.join(map(str,map(int,[w.data for w in self.window]))) == self.pattern.to01()
-
-    def has_patterned_sandbox(self):
-        return ''.join(map(str,map(int,[s.data for s in self.sandbox]))) == self.pattern.to01()
 
     def update_window_and_sandbox(self):
         self.window = []
@@ -74,47 +67,67 @@ class robot:
             self.sandbox.append(temp)
             temp = temp.next
 
-    def can_rearrange(self):
+    def local_rearrange(self):
         window_zero_count = [w.data for w in self.window].count(False)
         sandbox_zero_count = [s.data for s in self.sandbox].count(False)
         pattern_zero_count = self.pattern.count(0)
-        if window_zero_count > pattern_zero_count and sandbox_zero_count < self.slice_size:
-            return True
-        if window_zero_count < pattern_zero_count and sandbox_zero_count > 1:
-            return True
-        return False
+        i = 0
+        j = 0
+        # looking for 1s
+        while (window_zero_count > pattern_zero_count and sandbox_zero_count < self.slice_size) \
+        or (window_zero_count < pattern_zero_count and sandbox_zero_count > 0):
+            want = bool(window_zero_count > pattern_zero_count)
+            while self.window[i].data == want:
+                i += 1
+            while self.sandbox[j].data != want:
+                j += 1
+            self.commands.append(switch_command(self, i, j, True, False))
+            if want:
+                window_zero_count -= 1
+                sandbox_zero_count += 1
+            else:
+                window_zero_count += 1
+                sandbox_zero_count -= 1
+            i += 1
+            j += 1
+            if i == self.slice_size or j == self.slice_size:
+                break
 
     def swap(self):
         for i in range(0, self.slice_size):
-            self.commands.append(swap_command(self, i))
+            self.commands.append(switch_command(self, i, i, True, False))
 
-    def algo_iter(self):
-        if self.state > 2:  # done
-            return
+    def reach_pattern(self):
+        if not self.has_valid_window():
+            raise AssertionError('tried to reach pattern on an invalid slice!')
+        i = 0
+        taken = []
+        for i in range(0, self.slice_size):
+            if self.window[i].data != self.pattern[i] and i not in taken:
+                for j in range(i + 1, self.slice_size):
+                    if self.window[j].data != self.pattern[j] and self.window[j].data != self.window[i].data and j not in taken:
+                        self.commands.append(switch_command(self, i, j, True, True))
+                        taken.append(j)
+                        break
 
+    def algo_round(self):
+        self.total_rounds += 1
+
+        #compute
+        self.commands.append(update_state_command(self))
         if self.state == 0:
             if not self.has_valid_window() and not self.has_valid_sandbox():
-                if self.can_rearrange():  # keep rearranging until you can't
-                    self.commands.append(local_rearrange_command(self))
-                    return
-
+                self.local_rearrange()
             if [w.data for w in self.window].count(False)> self.pattern.count(0):
-                logging.debug('R' + str(self.ID) + 'swapping')
-                if [w.data for w in self.window].count(False) != [s.data for s in self.sandbox].count(False):
-                    self.swap()
+                self.swap()
 
         if self.state == 1:
-            if not self.has_patterned_window():
-                logging.debug('no window')
-                self.commands.append(reach_pattern_command(self, True))
-                return
-            if not self.has_patterned_sandbox():
-                logging.debug('no sand')
-                self.commands.append(reach_pattern_command(self, False))
-                return
+            self.reach_pattern()
+        if self.state == 2 and self.consecutive_valid_windows_seen >= self.k - 1:
+            return
 
         # move
+        # NOTE: Should probably implement the checking for robots blocking me in here and not in move command, for the unsynced version
         for i in range(0, self.slice_size):
             self.commands.append(move_command(self, True))
-        self.total_iterations_gone_through += 1
-        self.commands.append(update_state_command(self))
+

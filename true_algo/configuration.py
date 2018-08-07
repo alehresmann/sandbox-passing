@@ -8,11 +8,27 @@ from colorama import Fore
 from circular_list import node, circular_list
 from robot import robot
 
+colours = [ Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW, Fore.MAGENTA, Fore.CYAN ]
+
 class configuration:
     def __init__(self, pattern: str, input_string: str):
+        try:
+            int(pattern, 2)
+            int(input_string, 2)
+        except:
+            raise AssertionError('You didn\'t give me binary strings for your pattern and/or your configuration!')
+
+        if not len(input_string) % len(pattern) == 0:
+            raise AssertionError('Your input_string\'s length doesn\'t divide perfectly in your pattern\'s length!')
+
+        self.k = int(len(input_string) / len(pattern))
+
+        if not pattern.count('0') == int(input_string.count('0') / self.k):
+            raise AssertionError('Assure yourself you have the correct number of 1s and 0s in your config to reach the pattern!')
+
+        self.configuration = circular_list(input_string)
         self.pattern = bitarray(pattern)
         self.slice_size = len(pattern)
-        self.configuration = circular_list(input_string)
         self.bots = []
 
     def __len__(self):
@@ -25,23 +41,23 @@ class configuration:
         check = self.configuration.get_node_at(index)
         for i in range(0, self.slice_size * 2):
             if check.owned_by is not None:
-                raise ValueError('Can\'t place bot at ' +str(index) +'! Overlapping with R'+ str(check.owned_by))
+                raise AssertionError('Can\'t place bot at ' +str(index) +'! Overlapping with R'+ str(check.owned_by))
             check = check.next
 
         temp = self.configuration.get_node_at(index)
 
-        bot = robot(len(self.bots), self.pattern, temp, int(len(self.configuration) / self.slice_size), is_synchronised)
+        bot = robot(len(self.bots), self.pattern, temp, self.k, is_synchronised)
         for i in range(0, self.slice_size * 2):
             temp.owned_by = bot
             temp = temp.next
         self.bots.append(bot)
 
-    def check_validity(self):
+    def check_if_patterned(self):
         current = self.configuration.first_node
         count = 0
         while count < len(self):
             if current.data != self.pattern[count % len(self.pattern)]:
-                print('problem at ' + str(count))
+                logging.warning('problem at ' + str(count))
                 return False
             current = current.next
             count += 1
@@ -53,72 +69,39 @@ class configuration:
                 return False
         return True
 
-    def print_robots_final(self):
-        colours = [ Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW, Fore.MAGENTA, Fore.CYAN ]
-        logging.warning(Fore.WHITE + 'STATS:')
+    def get_robots_final(self):
+        ret = Fore.WHITE + 'STATS:\n'
         for bot in self.bots:
-            logging.warning(colours[bot.ID % len(colours)] + bot.final_state())
-        logging.warning(Fore.WHITE)
+            ret += colours[bot.ID % len(colours)] + bot.final_state() + '\n'
+        ret += Fore.WHITE
+        return ret
 
-    def run_algo(self, max_iterations: int):
-        logging.info(self)
-        tick_count = 0
-        while tick_count < max_iterations:
-            self.run_iteration()
-            logging.info(self)
-            if self.all_done():
-                break
-            tick_count += 1
-
-        if self.check_validity():
-            print('\nVALID!')
-        else:
-            raise ValueError('ERROR! did I run out of rounds or claim  to be done when I wasn\'t?')
-
-    def run_synchronised_algo(self, max_iterations: int):
-        logging.info(self)
-        tick_count = 0
-        while tick_count < max_iterations:
-            self.run_synchronised_round()
-            logging.info(self)
-            if self.all_done():
-                break
-            tick_count += 1
-
-        if self.check_validity():
-            print('\nVALID!')
-        else:
-            self.print_robots_final()
-            raise ValueError('ERROR! did I run out of rounds or claim  to be done when I wasn\'t?')
-
-    def run_iteration(self):
+    def run_round(self, synchronised):
         for bot in self.bots:
-            if len(bot.commands) == 0:
-                bot.algo_iter()
-            done_one_op = False
-            while not done_one_op:
-                if len(bot.commands) > 0:
-                    com = bot.commands.pop(0)
-                    com.execute()
-                    done_one_op = com.count_as_op
-                else:
-                    done_one_op = True
             logging.debug(bot)
 
-    def run_synchronised_round(self):
-        for bot in self.bots:
-            done_move = False
-            while not done_move:
-                if len(bot.commands) == 0:
-                    bot.algo_iter()
-                if len(bot.commands) > 0:
-                    if len(bot.commands) > 1 and str(bot.commands[-2]) == 'move':
-                        done_move = True
-                    for i in range(0, len(bot.commands)):
-                        com = bot.commands.pop(0)
-                        com.execute()
+            if len(bot.commands) == 0:
+                bot.algo_round()
 
-                else:
-                    done_move = True
-                logging.debug(bot)
+            for i in range(0, len(bot.commands)):
+                com = bot.commands.pop(0)
+                com.execute()
+                if not synchronised and com.count_as_op:
+                    break
 
+    def run_algo(self, max_iterations: int, synchronise=False):
+        logging.info(self)
+        round_count = 0
+        while round_count < max_iterations:
+            self.run_round(synchronise)
+            logging.info(self)
+            if self.all_done():
+                break
+            round_count += 1
+
+        if self.check_if_patterned():
+            logging.warning('\nSUCCESS!')
+        else:
+            logging.warning(self.get_robots_final())
+            raise ValueError('ERROR! did I run out of rounds or claim  to be done when I wasn\'t?')
+            logging.warning(self.configuration)
