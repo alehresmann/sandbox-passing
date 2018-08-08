@@ -128,9 +128,10 @@ class robot:
         if self.state == 2 and self.consecutive_valid_windows_seen >= self.k - 1:
             return
 
+        self.commands.append(update_state_command(self))
+
         # move
         # NOTE: Should probably implement the checking for robots blocking me in here and not in move command, for the unsynced version
         for i in range(0, self.slice_size):
             self.commands.append(move_command(self, True))
 
-        self.commands.append(update_state_command(self))
