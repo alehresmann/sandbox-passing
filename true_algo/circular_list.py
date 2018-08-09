@@ -52,6 +52,14 @@ class circular_list:
         node = self.first_node
         ret = ''
         for i in range(0, len(self)):
+            ret += str(int(node.data is True))
+            node = node.next
+        return ret
+
+    def print_coloured(self):
+        node = self.first_node
+        ret = ''
+        for i in range(0, len(self)):
             if node.owned_by is None:
                 ret += Fore.WHITE
             else:

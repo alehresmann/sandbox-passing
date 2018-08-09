@@ -69,12 +69,19 @@ class configuration:
                 return False
         return True
 
-    def get_robots_final(self):
+    def get_robots_stats(self):
         ret = Fore.WHITE + 'STATS:\n'
         for bot in self.bots:
             ret += colours[bot.ID % len(colours)] + bot.final_state() + '\n'
         ret += Fore.WHITE
         return ret
+
+    def get_config_stats(self):
+        config = str(self.configuration)
+        zero_ratios = []
+        for i in range(0, len(config), self.slice_size):
+            zero_ratios.append(config[i: i + self.slice_size].count('0')/self.slice_size)
+        return 'Zero ratio average: ' + str(sum(zero_ratios) / float(len(zero_ratios)))
 
     def run_round(self, synchronised):
         for bot in self.bots:
@@ -91,12 +98,12 @@ class configuration:
 
     def run_algo(self, max_iterations: int, synchronise=False):
         round_count = 1
-        logging.info('Round ' + str(round_count) + ':\t ' + str(self))
+        logging.info('Round ' + str(round_count) + ':\t ' + str(self.configuration.print_coloured()))
         logging.debug('\n')
         while round_count < max_iterations:
             self.run_round(synchronise)
             round_count += 1
-            logging.info('Round ' + str(round_count) + ':\t ' + str(self))
+            logging.info('Round ' + str(round_count) + ':\t ' + str(self.configuration.print_coloured()))
             logging.debug('\n')
             if self.all_done():
                 break
@@ -104,6 +111,6 @@ class configuration:
         if self.check_if_patterned():
             logging.warning('\nSUCCESS!')
         else:
-            logging.warning(self.get_robots_final())
+            logging.warning(self.get_robots_stats())
             raise ValueError('ERROR! did I run out of rounds or claim  to be done when I wasn\'t?')
             logging.warning(self.configuration)

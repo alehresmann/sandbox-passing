@@ -33,12 +33,14 @@ def compute(config: str, pattern: str, pos_list: list, max_rounds: int, synchron
         logging.warning('C_0:\n' + str(config))
     if 'p' in print_info:
         logging.warning('P:\n' + str(pattern))
+    if 'z' in print_info:
+        logging.warning('zero ratios: ' + str(c.get_config_stats()))
 
     c.run_algo(max_rounds, synchronise)
 
     # printing extra info
     if 's' in print_info:
-        logging.warning(c.get_robots_final())
+        logging.warning(c.get_robots_stats())
 
 
 def main():
@@ -83,7 +85,10 @@ def main():
 
 
     # random
-    random_parser.add_argument('pattern_size', type=int, default=8,
+    random_parser.add_argument('--pattern_size', '-ps', type=int,
+            help = 'the pattern size.')
+
+    random_parser.add_argument('--pattern', '-p', type=str,
             help = 'the pattern size.')
 
     random_parser.add_argument('config_size', type=int, default=32,
@@ -118,17 +123,24 @@ def main():
         compute(args.config, args.pattern, pos_list, args.max_rounds, args.synchronise, args.print_info)
 
     elif args.command == 'random':
-        if args.config_size % args.pattern_size != 0:
+        if not args.pattern_size and not args.pattern:
+            raise AssertionError('you need to give me a pattern (-p) or a pattern size (-ps) ! ')
+            sys.exit(0)
+
+        if args.pattern_size and args.config_size % args.pattern_size != 0:
             raise AssertionError('you didn\'t give a config size that divides perfectly into the pattern size!')
             sys.exit(0)
 
         for attempt in range(0, args.config_quant):
-            num_of_0s = random.randint(1, args.pattern_size - 1)
-            pattern = ''.join(random.sample('0' * num_of_0s + '1' * (args.pattern_size - num_of_0s), args.pattern_size))
-            config = ''.join(random.sample(pattern * int(args.config_size / args.pattern_size), args.config_size))
+            if args.pattern_size:
+                num_of_0s = random.randint(1, args.pattern_size - 1)
+                pattern = ''.join(random.sample('0' * num_of_0s + '1' * (args.pattern_size - num_of_0s), args.pattern_size))
+            elif args.pattern:
+                pattern = args.pattern
+            config = ''.join(random.sample(pattern * int(args.config_size / len(pattern)), args.config_size))
             pos_list = []
             for i in range(0, args.robots_quant):
-                pos_list.append(i * args.pattern_size * 2)
+                pos_list.append(i * len(pattern) * 2)
             compute(config, pattern, pos_list, args.max_rounds, args.synchronise, args.print_info)
 
 

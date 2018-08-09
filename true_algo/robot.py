@@ -59,6 +59,18 @@ class robot:
     def has_valid_sandbox(self):
         return [s.data for s in self.sandbox].count(False) == self.pattern.count(0)
 
+    def can_validate_window(self):
+        # used to know if one will need to swap or not
+        if self.has_valid_sandbox():
+            return False  # always swap if sandbox is valid and count of 0 in window is greater than in pattenr
+        window_zero_count = [w.data for w in self.window].count(False)
+        sandbox_zero_count = [s.data for s in self.sandbox].count(False)
+        pattern_zero_count = self.pattern.count(0)
+        if (window_zero_count < pattern_zero_count and sandbox_zero_count + window_zero_count >= pattern_zero_count) \
+        or (window_zero_count > pattern_zero_count and (self.slice_size - sandbox_zero_count) >= (window_zero_count - pattern_zero_count)):
+                return True
+        return False
+
     def update_window_and_sandbox(self):
         self.window = []
         self.sandbox = []
@@ -97,6 +109,7 @@ class robot:
                 break
 
     def swap(self):
+        print('SWAP')
         for i in range(0, self.slice_size):
             self.commands.append(switch_command(self, i, i, True, False))
 
@@ -121,7 +134,8 @@ class robot:
             if not self.has_valid_window() and not self.has_valid_sandbox():
                 self.local_rearrange()
             if [w.data for w in self.window].count(False)> self.pattern.count(0):
-                self.swap()
+                if not self.can_validate_window():
+                    self.swap()
 
         if self.state == 1:
             self.reach_pattern()
