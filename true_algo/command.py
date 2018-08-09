@@ -12,6 +12,9 @@ class command():
     def execute(self):
         pass
 
+    # to be able to print commands in a list
+    def __repr__(self):
+        return self.__str__()
 
 class switch_command(command):
     def __init__(self, bot, first_index, second_index, first_in_window, second_in_window):
@@ -20,8 +23,8 @@ class switch_command(command):
         self.in_windows = [first_in_window, second_in_window]
 
     def __str__(self):
-        return 'switch ' + str(self.indices[0]) + ', ' + str(self.in_windows[0]) \
-                + ' and '+ str(self.indices[1]) + ', ' + str(self.in_windows[1])
+        return 'switch ' + str(self.indices[0]) + ' in ' + ('w' if self.in_windows[0] else 's') \
+                + ' and '+ str(self.indices[1]) + ' in ' + ('w' if self.in_windows[1] else 's')
 
     def execute(self):
         switch = []
@@ -80,7 +83,8 @@ class move_command(command):
         self.bot.total_moves_done += 1
 
 
-class update_state_command(command):  # as this should be done once every $p$ bits, I added it as an instantaneous command.
+class update_state_command(command):
+    # as this should be done once every $p$ bits, but is merely a 'looking' step, it is considered an instantaneous command.
     def __init__(self, bot):
         command.__init__(self, bot, False)
 
@@ -103,4 +107,5 @@ class update_state_command(command):  # as this should be done once every $p$ bi
         elif self.bot.state == 1:
             if self.bot.consecutive_valid_windows_seen >= self.bot.k:
                 self.bot.state = 2
+                self.bot.consecutive_valid_windows_seen = 0
                 self.bot.reached_done_at = self.bot.total_rounds
