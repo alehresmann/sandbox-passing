@@ -54,7 +54,6 @@ class robot:
             temp = temp.next
 
     def final_state(self):  # for printing after algorithm completion
-        print(self)
         return 'R' + str(self.ID) + '\t, total switches: ' + str(self.total_switches_done) \
                 + '\ttotal moves: ' + str(self.total_moves_done) + '\ttotal rounds: ' \
                 + str(self.total_rounds) + '\ttime waited: ' \
@@ -70,18 +69,26 @@ class robot:
         return [s.data for s in self.sandbox].count(False) == self.pattern.count(0)
 
     def should_I_swap(self):
-        if self.has_valid_sandbox():
-            return True  # always swap if sandbox is valid and count of 0 in window is greater than in pattenr
-        wz = [w.data for w in self.window].count(False)
-        sz = [s.data for s in self.sandbox].count(False)
-        pz = self.pattern.count(0)
-        if (wz < pz and sz + wz >= pz) \
-            or (wz > pz and (self.slice_size - sz) >= (wz - pz)):
+        zh = [w.data for w in self.window].count(False) + [s.data for s in self.sandbox].count(False)
+        oh = [w.data for w in self.window].count(True) + [s.data for s in self.sandbox].count(True)
+        zw = self.pattern.count(0)
+        ow = self.pattern.count(1)
+
+        # if window can be made valid, don't swap
+        if zh >= zw and oh >= ow:
+            if self.has_valid_sandbox():
+                return True
             return False
-        return True
+
+        # if not enough ones, the sandbox will necessarily have more or equal zeroes as the window
+        if oh < ow:
+            return False
+
+        # if not enough zeroes, push the zeroes to the right.
+        if zh < zw:
+            return True
 
     def local_rearrange(self):
-        # counts of zeros in window, sandbox, and pattern
         wz = [w.data for w in self.window].count(False)
         sz = [s.data for s in self.sandbox].count(False)
         pz = self.pattern.count(0)
@@ -135,13 +142,13 @@ class robot:
         if self.state == 0:
             if not self.has_valid_window() and not self.has_valid_sandbox():
                 self.local_rearrange()
-            if [w.data for w in self.window].count(False)> self.pattern.count(0):
-                if self.should_I_swap():
-                    self.swap()
+            if self.should_I_swap():
+                self.swap()
 
         if self.state == 1:
             self.reach_pattern()
-        if self.state == 2 and self.consecutive_valid_windows_seen >= self.k - 1:
+
+        if self.state == 2 and self.consecutive_valid_windows_seen >= self.k - 2:
             return
 
         self.commands.append(update_state_command(self))

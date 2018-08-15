@@ -103,6 +103,7 @@ class update_state_command(command):
                 self.bot.consecutive_valid_windows_seen = 0
                 self.bot.state = 1
                 self.bot.reached_satisfied_at = self.bot.total_rounds
+                logging.info('R'+ str(self.bot.ID) + ' satisfied!')
 
         elif self.bot.state == 1:
             if self.bot.consecutive_valid_windows_seen >= self.bot.k:

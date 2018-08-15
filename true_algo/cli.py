@@ -41,6 +41,8 @@ def compute(config: str, pattern: str, pos_list: list, max_rounds: int, synchron
     # printing extra info
     if 's' in print_info:
         logging.warning(c.get_robots_stats())
+    if 'r' in print_info:
+        [logging.warning(bot) for bot in c.bots]
 
 
 def main():

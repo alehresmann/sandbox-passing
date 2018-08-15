@@ -7,6 +7,7 @@ from colorama import Fore
 
 from circular_list import node, circular_list
 from robot import robot
+from analyser import analyser
 
 colours = [ Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW, Fore.MAGENTA, Fore.CYAN ]
 
@@ -30,6 +31,7 @@ class configuration:
         self.pattern = bitarray(pattern)
         self.slice_size = len(pattern)
         self.bots = []
+        self.initial_configuration = bitarray(input_string)
 
     def __len__(self):
         return len(self.configuration)
@@ -109,7 +111,12 @@ class configuration:
                 break
 
         if self.check_if_patterned():
+            #if self.bots[0].reached_satisfied_at >= 32:
+            #    print(self.initial_configuration.to01())
             logging.warning('\nSUCCESS!')
+            a = analyser()
+            a.analyse(self.initial_configuration.to01(), self.pattern.to01())
+            print('actual rounds: ', self.bots[0].reached_satisfied_at)
         else:
             logging.warning(self.get_robots_stats())
             raise ValueError('ERROR! did I run out of rounds or claim  to be done when I wasn\'t?')
