@@ -12,7 +12,7 @@ from colorama import init
 
 from configuration import configuration
 
-def compute(config: str, pattern: str, pos_list: list, max_rounds: int, synchronise: bool, print_info: str):
+def compute(config: str, pattern: str, pos_list: list, max_rounds: int, print_info: str):
     try:
         int(pattern, 2)
         int(config, 2)
@@ -27,7 +27,7 @@ def compute(config: str, pattern: str, pos_list: list, max_rounds: int, synchron
 
     c = configuration(pattern, config)
     for pos in pos_list:
-        c.attach_bot(pos, synchronise)
+        c.attach_bot(pos)
 
     if 'c' in print_info:
         logging.warning('C_0:\n' + str(config))
@@ -36,7 +36,7 @@ def compute(config: str, pattern: str, pos_list: list, max_rounds: int, synchron
     if 'z' in print_info:
         logging.warning('zero ratios: ' + str(c.get_config_stats()))
 
-    c.run_algo(max_rounds, synchronise)
+    c.run_algo(max_rounds)
 
     # printing extra info
     if 's' in print_info:
@@ -51,9 +51,6 @@ def main():
     # verbosity
     parser.add_argument('--verbose', '-v', type=int, default=0,
             help='the verbosity of the output. 0, 1, or 2.')
-
-    parser.add_argument('--synchronise', '-s', action='store_true',
-            help='whether or not robots are synchronised. Use when you have many robots relative to the config size.')
 
     parser.add_argument('--print_info', '-pi', default='',
             help='what you want to be printed as additional information.')
@@ -122,7 +119,7 @@ def main():
     # running algo
     if args.command == 'particular':
         pos_list = [int(pos) for pos in args.robot_starts]
-        compute(args.config, args.pattern, pos_list, args.max_rounds, args.synchronise, args.print_info)
+        compute(args.config, args.pattern, pos_list, args.max_rounds, args.print_info)
 
     elif args.command == 'random':
         if not args.pattern_size and not args.pattern:
@@ -143,7 +140,7 @@ def main():
             pos_list = []
             for i in range(0, args.robots_quant):
                 pos_list.append(i * len(pattern) * 2)
-            compute(config, pattern, pos_list, args.max_rounds, args.synchronise, args.print_info)
+            compute(config, pattern, pos_list, args.max_rounds, args.print_info)
 
 
 # don't call main unless the script is called directly.

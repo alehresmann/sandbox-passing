@@ -39,7 +39,7 @@ class configuration:
     def __str__(self):
         return str(self.configuration)
 
-    def attach_bot(self, index: int, is_synchronised=False):
+    def attach_bot(self, index: int):
         check = self.configuration.get_node_at(index)
         for i in range(0, self.slice_size * 2):
             if check.owned_by is not None:
@@ -48,7 +48,7 @@ class configuration:
 
         temp = self.configuration.get_node_at(index)
 
-        bot = robot(len(self.bots), self.pattern, temp, self.k, is_synchronised)
+        bot = robot(len(self.bots), self.pattern, temp, self.k)
         for i in range(0, self.slice_size * 2):
             temp.owned_by = bot
             temp = temp.next
@@ -67,7 +67,7 @@ class configuration:
 
     def all_done(self):
         for bot in self.bots:
-            if bot.state < 2:
+            if bot.state:
                 return False
         return True
 
@@ -85,7 +85,7 @@ class configuration:
             zero_ratios.append(config[i: i + self.slice_size].count('0')/self.slice_size)
         return 'Zero ratio average: ' + str(sum(zero_ratios) / float(len(zero_ratios)))
 
-    def run_round(self, synchronised):
+    def run_round(self):
         for bot in self.bots:
 
             if len(bot.commands) == 0:
@@ -94,16 +94,14 @@ class configuration:
             for i in range(0, len(bot.commands)):
                 com = bot.commands.pop(0)
                 com.execute()
-                if not synchronised and com.count_as_op:
-                    break
             logging.debug(bot)
 
-    def run_algo(self, max_iterations: int, synchronise=False):
+    def run_algo(self, max_iterations: int):
         round_count = 1
         logging.info('Round ' + str(round_count) + ':\t ' + str(self.configuration.print_coloured()))
         logging.debug('\n')
         while round_count < max_iterations:
-            self.run_round(synchronise)
+            self.run_round()
             round_count += 1
             logging.info('Round ' + str(round_count) + ':\t ' + str(self.configuration.print_coloured()))
             logging.debug('\n')
