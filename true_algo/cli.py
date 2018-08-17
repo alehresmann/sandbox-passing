@@ -12,7 +12,7 @@ from colorama import init
 
 from configuration import configuration
 
-def compute(config: str, pattern: str, pos_list: list, max_rounds: int, print_info: str):
+def compute(config: str, pattern: str, pos_list: list, max_rounds: int, print_info: str, print_full: bool):
     try:
         int(pattern, 2)
         int(config, 2)
@@ -25,7 +25,8 @@ def compute(config: str, pattern: str, pos_list: list, max_rounds: int, print_in
     if max_rounds < 1:
         raise AssertionError('Max rounds value must be greater than 1!')
 
-    c = configuration(pattern, config)
+    c = configuration(pattern, config, print_full)
+
     for pos in pos_list:
         c.attach_bot(pos)
 
@@ -60,6 +61,10 @@ def main():
                     'pattern, \'s\' for stats, \'r\' for robots. you can ' \
                     'use them in any order, eg: -pi scr')
 
+    parser.add_argument('--print_full', '-pf', action='store_true',
+            help='Whether or not you want the config to be printed fully ' \
+                    'at every round or just minimally. You won\'t see a ' \
+                    'change if verbosity is set to 0')
     # subparsers
     subparsers = parser.add_subparsers(title='subcommands - Use \'-h\' to find out more.',
     metavar='', dest='command')
@@ -126,7 +131,7 @@ def main():
     # running algo
     if args.command == 'particular':
         pos_list = [int(pos) for pos in args.robot_starts]
-        compute(args.config, args.pattern, pos_list, args.max_rounds, args.print_info)
+        compute(args.config, args.pattern, pos_list, args.max_rounds, args.print_info, args.print_full)
 
     elif args.command == 'random':
         if not args.pattern_size and not args.pattern:
@@ -147,7 +152,7 @@ def main():
             pos_list = []
             for i in range(0, args.robots_quant):
                 pos_list.append(i * len(pattern) * 2)
-            compute(config, pattern, pos_list, args.max_rounds, args.print_info)
+            compute(config, pattern, pos_list, args.max_rounds, args.print_info, args.print_full)
 
 
 # don't call main unless the script is called directly.

@@ -1,9 +1,4 @@
-# A circular doubly-linked linked list, with minor modifications for printing.
-
-from colorama import Fore
-
-# no black because unreadable on dark terminal. white reserved for no robots.
-colours = [ Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW, Fore.MAGENTA, Fore.CYAN ]
+# A doubly-linked circular linked list, with an additional 'owned_by' for node ownership
 
 class node:
     def __init__(self):
@@ -11,7 +6,6 @@ class node:
         self.prev = None
         self.next = None
         self.owned_by = None
-        self.quantity = 0
 
 class circular_list:
     def __init__(self, input_string: str):
@@ -55,47 +49,3 @@ class circular_list:
             ret += str(int(node.data is True))
             node = node.next
         return ret
-
-    def print_coloured(self):
-        node = self.first_node
-        ret = ''
-        for i in range(0, len(self)):
-            if node.owned_by is None:
-                ret += Fore.WHITE
-            else:
-                ret += colours[node.owned_by.ID % len(colours)]
-            ret += str(int(node.data is True))
-            node = node.next
-        ret += Fore.WHITE
-        return ret
-
-
-#    def print_coloured(self):
-#        # TO REFACTOR. use hardcoded values for now.
-#        P_ZERO = 2
-#        P_LEN = 4
-#
-#        configuration = str(self)
-#
-#        slice_ownership = []
-#        node = self.first_node
-#        for i in range(0, int(len(self)/P_LEN)):
-#            if node.owned_by is None:
-#                slice_ownership.append(-1)
-#            else:
-#                slice_ownership.append(node.owned_by.ID)
-#            for j in range(0, P_LEN):
-#                node = node.next
-#
-#        slices = [configuration[i: i + P_LEN] for i in range(0,len(configuration), P_LEN)]
-#        zeroes = [s.count('0') - P_ZERO for s in slices]
-#
-#        ret = ''
-#        for i, z in enumerate(slices):
-#            if slice_ownership[i] == -1:
-#                ret += Fore.WHITE
-#            else:
-#                ret += colours[slice_ownership[i] % len(colours)]
-#            ret += str(z).ljust(3)
-#        ret += Fore.WHITE
-#        return ret

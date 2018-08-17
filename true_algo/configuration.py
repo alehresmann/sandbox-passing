@@ -12,7 +12,7 @@ from analyser import analyser
 colours = [ Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW, Fore.MAGENTA, Fore.CYAN ]
 
 class configuration:
-    def __init__(self, pattern: str, input_string: str):
+    def __init__(self, pattern: str, input_string: str, pf=False):
         try:
             int(pattern, 2)
             int(input_string, 2)
@@ -32,12 +32,63 @@ class configuration:
         self.slice_size = len(pattern)
         self.bots = []
         self.initial_configuration = bitarray(input_string)
+        self.pf = pf
 
     def __len__(self):
         return len(self.configuration)
 
     def __str__(self):
-        return str(self.configuration)
+        if self.pf:
+            return self.print_full()
+        else:
+            return self.print_minimal()
+
+    def print_full(self):
+        node = self.configuration.first_node
+        ret = ''
+        for i in range(0, len(self)):
+            if node.owned_by is None:
+                ret += Fore.WHITE
+            else:
+                ret += colours[node.owned_by.ID % len(colours)]
+            ret += str(int(node.data is True))
+            node = node.next
+        ret += Fore.WHITE
+        return ret
+
+    def print_minimal(self):
+        c_string = str(self.configuration)
+        pz = self.pattern.count(False)
+
+        slice_ownership = []
+        node = self.configuration.first_node
+        for i in range(0, int(len(c_string) / self.slice_size)):
+            if node.owned_by is None:
+                slice_ownership.append(-1)
+            else:
+                slice_ownership.append(node.owned_by.ID)
+            for j in range(0, self.slice_size):
+                node = node.next
+
+        slices = [c_string[i: i + self.slice_size] for i in range(0, len(c_string), self.slice_size)]
+
+        heaviness = []
+        for s in slices:
+            if s.count('0') - pz == 0:
+                heaviness.append('V')
+            else:
+                heaviness.append(int(bool(s.count('0') < pz)))
+
+        ret = ''
+        for i, z in enumerate(heaviness):
+            if slice_ownership[i] == -1:
+                ret += Fore.WHITE
+            else:
+                ret += colours[slice_ownership[i] % len(colours)]
+            ret += str(z) + ' '
+        ret += Fore.WHITE
+        return ret
+
 
     def attach_bot(self, index: int):
         check = self.configuration.get_node_at(index)
@@ -79,11 +130,8 @@ class configuration:
         return ret
 
     def get_config_stats(self):
-        config = str(self.configuration)
-        zero_ratios = []
-        for i in range(0, len(config), self.slice_size):
-            zero_ratios.append(config[i: i + self.slice_size].count('0')/self.slice_size)
-        return 'Zero ratio average: ' + str(sum(zero_ratios) / float(len(zero_ratios)))
+        a = analyser()
+        a.analyse(self.initial_configuration.to01(), self.pattern.to01())
 
     def run_round(self):
         for bot in self.bots:
@@ -98,11 +146,11 @@ class configuration:
 
     def run_algo(self, max_iterations: int):
         round_count = 1
-        logging.info('Initial ' + ':\t ' + str(self.configuration.print_coloured()))
+        logging.info('Initial ' + ':\t ' + str(self))
         logging.debug('\n')
         while round_count < max_iterations:
             self.run_round()
-            logging.info('Round ' + str(round_count) + ' end:\t ' + str(self.configuration.print_coloured()))
+            logging.info('Round ' + str(round_count) + ' end:\t ' + str(self))
             round_count += 1
             logging.debug('\n')
             if self.all_done():
@@ -112,9 +160,7 @@ class configuration:
             #if self.bots[0].total_rounds >= 130:
             #    print(self.initial_configuration.to01())
             logging.warning('\nSUCCESS!')
-            a = analyser()
-            a.analyse(self.initial_configuration.to01(), self.pattern.to01())
-            print('actual rounds taken R0: ', self.bots[0].total_rounds)
+
         else:
             logging.warning(self.get_robots_stats())
             raise ValueError('ERROR! did I run out of rounds or claim  to be done when I wasn\'t?')
