@@ -32,8 +32,6 @@ class robot:
         self.total_moves_done = 0
         self.total_time_waited = 0
         self.total_rounds = 0
-        self.reached_satisfied_at = -1
-        self.reached_done_at = -1
 
     def __str__(self):  # for debugging
         window_data = [w.data for w in self.window]
@@ -62,10 +60,8 @@ class robot:
         return 'R' + str(self.ID) + '\t, total switches: ' + str(self.total_switches_done) \
                 + '\ttotal moves: ' + str(self.total_moves_done) + '\ttotal rounds: ' \
                 + str(self.total_rounds) + '\ttime waited: ' \
-                + str(self.total_time_waited) + '\tconsecutive slices seen: ' \
-                + str(self.consecutive_pattern_windows_seen) + '\t state: ' + str(self.state) \
-                + ', reached satisfied at round: ' + str(self.reached_satisfied_at) \
-                + ', reached done at round: ' + str(self.reached_done_at)
+                + str(self.total_time_waited) + '\tconsecutive pattern windows seen: ' \
+                + str(self.consecutive_pattern_windows_seen) + '\t state: ' + str(self.state)
 
     def has_valid_window(self):
         return [w.data for w in self.window].count(False) == self.pattern.count(0)
@@ -143,7 +139,7 @@ class robot:
         if wz > pz and wz > self.sandbox_projection.count(False):
             self.swap()
 
-        if wz == self.pattern.count(0):
+        if self.window_projection.count(False) == self.pattern.count(0):
             self.reach_pattern()
             self.consecutive_pattern_windows_seen += 1
         else:

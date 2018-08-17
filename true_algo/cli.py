@@ -46,28 +46,35 @@ def compute(config: str, pattern: str, pos_list: list, max_rounds: int, print_in
 
 
 def main():
-    parser = argparse.ArgumentParser(description='CLI for sandbox passing algos')
+    parser = argparse.ArgumentParser(description='CLI for sandbox passing ' \
+    'algorithm. Example input: python3 cli.py -v 2 -pi rc particular 000111 ' \
+    '000000111111 1000 0')
 
     # verbosity
-    parser.add_argument('--verbose', '-v', type=int, default=0,
-            help='the verbosity of the output. 0, 1, or 2.')
+    parser.add_argument('--verbose', '-v', type=int, default=1,
+            help='the verbosity of the output. 0, 1, or 2. Higher is more verbose. Default is 1.')
 
     parser.add_argument('--print_info', '-pi', default='',
-            help='what you want to be printed as additional information.')
+            help='what you want to be printed as additional information. ' \
+                    'Currently takes: \'c\' for configuration, \'p\' for ' \
+                    'pattern, \'s\' for stats, \'r\' for robots. you can ' \
+                    'use them in any order, eg: -pi scr')
 
     # subparsers
     subparsers = parser.add_subparsers(title='subcommands - Use \'-h\' to find out more.',
     metavar='', dest='command')
 
-    particular_parser = subparsers.add_parser('particular', help='For' \
-            'testing a particular input. Input: particular [pattern]' \
-            '[initial configuration] [max number of rounds] [bot start positions]')
+    particular_parser = subparsers.add_parser('particular', help='For ' \
+            'testing a particular input. Input: particular [pattern] ' \
+            '[initial configuration] [max number of rounds] [bot start ' \
+            'positions]\neg: particular 000111 000000000111111111 1000 0 12')
 
-    random_parser = subparsers.add_parser('random', help='For testing' \
-            'randomg inputs. Input: [pattern size]' \
-            '[size of configuration] [max number of rounds]' \
-            '[number of robots]' \
-            '[number of random configurations generated]')
+    random_parser = subparsers.add_parser('random', help='For testing ' \
+            'random inputs. Input: [-p/-ps] [pattern or pattern size] ' \
+            '[size of configuration] [max number of rounds] ' \
+            '[number of robots] ' \
+            '[number of random configurations generated] \neg: random ' \
+            '-p 000111 60 1000 2 1')
 
     # particular
     particular_parser.add_argument('pattern', type=str, default='00001111',

@@ -1,37 +1,77 @@
 # for figuring out how many rounds it should take.
 import logging
-
+import math
+from circular_list import circular_list
+from functools import reduce
 
 class analyser:
     def __init__(self):
         pass
     def analyse(self, configuration: str, pattern: str):
-        slices = [configuration[i: i + len(pattern)] for i in range(0,len(configuration), len(pattern))]
-        zeroes = [s.count('0') - pattern.count('0') for s in slices]
-        cumulative_zero_counter = 0
-        not_full_pass = 0
-        full_passes_added = 1
-        estimated_rounds_required = len(slices) - 1
-        for i, z in enumerate(zeroes):
-            cumulative_zero_counter = cumulative_zero_counter + z
-            #print(z, end = ' ')
-            logging.info('i:' + str(i % len(slices)) + '\tz:' + str(z) +  '\tc:' + str(cumulative_zero_counter))
+        cl = circular_list(configuration)
+        distances = []
+        for i in range(0, len(cl)):
+            current = cl.get_node_at(i)
+            left = current
+            left_counter = 0
+            while left.data == current.data:
+                left = left.prev
+                left_counter += 1
 
-            if cumulative_zero_counter < -(len(pattern) / 2):
-                cumulative_zero_counter += int((len(pattern) / 2))
-                logging.info('AH')
-                not_full_pass = i
+            right = current
+            right_counter = 0
+            while right.data  == current.data:
+                right = right.next
+                right_counter += 1
 
-            if cumulative_zero_counter > (full_passes_added * int(len(pattern) / 2)):
-                logging.info('OH')
-                not_full_pass = i
-                if cumulative_zero_counter >= ((full_passes_added + 1) * int(len(pattern) / 2)):
-                    full_passes_added += 1
+            if right_counter > left_counter:
+                distances.append(left_counter)
+            else:
+                distances.append(right_counter)
 
-        estimated_rounds_required += not_full_pass
-        print('\nestimated rounds: ', estimated_rounds_required)
+        print('arithmetic mean of distances: ', arithmetic_mean(distances))
+
+def geometric_mean(seq):
+    return reduce(lambda x, y: x*y, seq)**(1.0/len(seq))
+
+def arithmetic_mean(seq):
+    return float(sum(seq))/max(len(seq),1)
 
 def main():
     ## tester
     a = analyser()
     a.analyse('000000000000111111111111','000111')
+
+#        estimated_rounds = 0
+#
+#        zeros_blocks_length = []
+#        ones_blocks_length = []
+#        count = 0
+#        last_bit = configuration[0]
+#        for i in range(0, len(configuration)):
+#            current = configuration[i]
+#
+#            if current == last_bit:
+#                count += 1
+#
+#            if current != last_bit:
+#                if last_bit == '1':
+#                    ones_blocks_length.append(count)
+#                else:
+#                    zeros_blocks_length.append(count)
+#                count = 1
+#                last_bit = current
+#
+#            if i == len(configuration) - 1:
+#                if current == '1':
+#                    ones_blocks_length.append(count)
+#                else:
+#                    zeros_blocks_length.append(count)
+#
+#        gz = geometric_mean(zeros_blocks_length)  # average distance
+#        go = geometric_mean(ones_blocks_length)
+#        az = arithmetic_mean(zeros_blocks_length) # average length
+#        ao = arithmetic_mean(ones_blocks_length)
+#
+#        estimated_rounds = (gz + go) / len(configuration)
+#        print('z', gz, az, 'o', go, ao)

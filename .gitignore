@@ -4,3 +4,5 @@ efficient_rearrange_window.py
 stats/
 .gitignore
 proof/
+cpp/
+.gitignore

@@ -98,23 +98,23 @@ class configuration:
 
     def run_algo(self, max_iterations: int):
         round_count = 1
-        logging.info('Round ' + str(round_count) + ':\t ' + str(self.configuration.print_coloured()))
+        logging.info('Initial ' + ':\t ' + str(self.configuration.print_coloured()))
         logging.debug('\n')
         while round_count < max_iterations:
             self.run_round()
+            logging.info('Round ' + str(round_count) + ' end:\t ' + str(self.configuration.print_coloured()))
             round_count += 1
-            logging.info('Round ' + str(round_count) + ':\t ' + str(self.configuration.print_coloured()))
             logging.debug('\n')
             if self.all_done():
                 break
 
         if self.check_if_patterned():
-            #if self.bots[0].reached_satisfied_at >= 32:
+            #if self.bots[0].total_rounds >= 130:
             #    print(self.initial_configuration.to01())
             logging.warning('\nSUCCESS!')
             a = analyser()
             a.analyse(self.initial_configuration.to01(), self.pattern.to01())
-            print('actual rounds: ', self.bots[0].reached_satisfied_at)
+            print('actual rounds taken R0: ', self.bots[0].total_rounds)
         else:
             logging.warning(self.get_robots_stats())
             raise ValueError('ERROR! did I run out of rounds or claim  to be done when I wasn\'t?')
