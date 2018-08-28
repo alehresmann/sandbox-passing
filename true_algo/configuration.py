@@ -32,7 +32,9 @@ class configuration:
         self.slice_size = len(pattern)
         self.bots = []
         self.initial_configuration = bitarray(input_string)
+        self.a = analyser()
         self.pf = pf
+        self.rounds_info = False
 
     def __len__(self):
         return len(self.configuration)
@@ -75,7 +77,10 @@ class configuration:
         heaviness = []
         for s in slices:
             if s.count('0') - pz == 0:
-                heaviness.append('V')
+                if s == self.pattern.to01():
+                    heaviness.append('P')
+                else:
+                    heaviness.append('V')
             else:
                 heaviness.append(int(bool(s.count('0') < pz)))
 
@@ -89,6 +94,18 @@ class configuration:
         ret += Fore.WHITE
         return ret
 
+    def get_robots_stats(self):
+        ret = Fore.WHITE + 'STATS:\n'
+        for bot in self.bots:
+            ret += colours[bot.ID % len(colours)] + bot.get_stats() + '\n'
+        ret += Fore.WHITE
+        return ret
+
+    def get_config_stats(self):
+        return str(self.a.get_upper_bound(self.initial_configuration.to01(), self.pattern.to01()))
+
+    def get_round_stats(self):
+        return 'i: ' + str(self.a.count_invalid(str(self.configuration), self.pattern.to01()))
 
     def attach_bot(self, index: int):
         check = self.configuration.get_node_at(index)
@@ -122,17 +139,6 @@ class configuration:
                 return False
         return True
 
-    def get_robots_stats(self):
-        ret = Fore.WHITE + 'STATS:\n'
-        for bot in self.bots:
-            ret += colours[bot.ID % len(colours)] + bot.final_state() + '\n'
-        ret += Fore.WHITE
-        return ret
-
-    def get_config_stats(self):
-        a = analyser()
-        a.analyse(self.initial_configuration.to01(), self.pattern.to01())
-
     def run_round(self):
         for bot in self.bots:
 
@@ -146,20 +152,29 @@ class configuration:
 
     def run_algo(self, max_iterations: int):
         round_count = 1
-        logging.info('Initial ' + ':\t ' + str(self))
         logging.debug('\n')
+        extra = ''
         while round_count < max_iterations:
+            if self.rounds_info:
+                extra = self.get_round_stats()
+            logging.info('\nRound ' + str(round_count) + ' start:\t' + str(self) + ' ' + extra)
             self.run_round()
-            logging.info('Round ' + str(round_count) + ' end:\t ' + str(self))
             round_count += 1
             logging.debug('\n')
             if self.all_done():
+                logging.info('\nEND: \t\t' + str(self) + ' ' + extra)
                 break
 
         if self.check_if_patterned():
+
+            #if self.a.get_upper_bound(self.initial_configuration.to01(), self.pattern.to01()) < self.bots[0].total_rounds:
+            #        print(self.initial_configuration.to01(),
+            #                self.a.get_upper_bound(self.initial_configuration.to01(), self.pattern.to01()),
+            #                self.bots[0].total_rounds, self.a.get_upper_bound(self.initial_configuration.to01(), self.pattern.to01()) - self.bots[0].total_rounds)
             #if self.bots[0].total_rounds >= 130:
             #    print(self.initial_configuration.to01())
             logging.warning('\nSUCCESS!')
+            logging.warning('total rounds:', self.bots[0].total_rounds)
 
         else:
             logging.warning(self.get_robots_stats())

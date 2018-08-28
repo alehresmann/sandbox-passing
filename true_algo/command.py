@@ -61,4 +61,3 @@ class move_command(command):
         new_node_to_add.owned_by = self.bot
 
         self.bot.update_window_and_sandbox()
-        self.bot.total_moves_done += 1

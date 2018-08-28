@@ -7,30 +7,26 @@ from functools import reduce
 class analyser:
     def __init__(self):
         pass
-    def analyse(self, configuration: str, pattern: str):
-        cl = circular_list(configuration)
-        distances = []
-        for i in range(0, len(cl)):
-            current = cl.get_node_at(i)
-            left = current
-            left_counter = 0
-            while left.data == current.data:
-                left = left.prev
-                left_counter += 1
+    def get_upper_bound(self, c: str, p: str):  # configuration, pattern
 
-            right = current
-            right_counter = 0
-            while right.data  == current.data:
-                right = right.next
-                right_counter += 1
+        i = self.count_invalid(c, p)
+        k = int(len(c)/len(p))
 
-            if right_counter > left_counter:
-                distances.append(left_counter)
-            else:
-                distances.append(right_counter)
+        expected = (k - 1) + i * (k - 1) / 2
+        if expected < k:
+            expected = k
+        return expected
 
-        print('arithmetic mean of distances: ', arithmetic_mean(distances))
 
+    def count_invalid(self, c: str, p: str):
+        slices = [c[i: i + len(p)] for i in range(0, len(c), len(p))]
+        count = 0
+        for s in slices:
+            if s.count('0') != p.count('0'):
+                count += 1
+        return count
+
+## currently unused but thought to have been useful at some point
 def geometric_mean(seq):
     return reduce(lambda x, y: x*y, seq)**(1.0/len(seq))
 
@@ -41,37 +37,3 @@ def main():
     ## tester
     a = analyser()
     a.analyse('000000000000111111111111','000111')
-
-#        estimated_rounds = 0
-#
-#        zeros_blocks_length = []
-#        ones_blocks_length = []
-#        count = 0
-#        last_bit = configuration[0]
-#        for i in range(0, len(configuration)):
-#            current = configuration[i]
-#
-#            if current == last_bit:
-#                count += 1
-#
-#            if current != last_bit:
-#                if last_bit == '1':
-#                    ones_blocks_length.append(count)
-#                else:
-#                    zeros_blocks_length.append(count)
-#                count = 1
-#                last_bit = current
-#
-#            if i == len(configuration) - 1:
-#                if current == '1':
-#                    ones_blocks_length.append(count)
-#                else:
-#                    zeros_blocks_length.append(count)
-#
-#        gz = geometric_mean(zeros_blocks_length)  # average distance
-#        go = geometric_mean(ones_blocks_length)
-#        az = arithmetic_mean(zeros_blocks_length) # average length
-#        ao = arithmetic_mean(ones_blocks_length)
-#
-#        estimated_rounds = (gz + go) / len(configuration)
-#        print('z', gz, az, 'o', go, ao)

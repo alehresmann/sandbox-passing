@@ -34,15 +34,17 @@ def compute(config: str, pattern: str, pos_list: list, max_rounds: int, print_in
         logging.warning('C_0:\n' + str(config))
     if 'p' in print_info:
         logging.warning('P:\n' + str(pattern))
-    if 'z' in print_info:
-        logging.warning('zero ratios: ' + str(c.get_config_stats()))
+    if 'a' in print_info:
+        logging.warning(c.get_config_stats())
+    if 'rou' in print_info:
+        c.rounds_info = True
 
     c.run_algo(max_rounds)
 
     # printing extra info
     if 's' in print_info:
         logging.warning(c.get_robots_stats())
-    if 'r' in print_info:
+    if 'rob' in print_info:
         [logging.warning(bot) for bot in c.bots]
 
 
@@ -99,7 +101,7 @@ def main():
     random_parser.add_argument('--pattern_size', '-ps', type=int,
             help = 'the pattern size.')
 
-    random_parser.add_argument('--pattern', '-p', type=str,
+    random_parser.add_argument('--pattern', '-pa', type=str,
             help = 'the pattern size.')
 
     random_parser.add_argument('config_size', type=int, default=32,
