@@ -12,9 +12,7 @@ class analyser:
         i = self.count_invalid(c, p)
         k = int(len(c)/len(p))
 
-        expected = (k - 1) + i * (k - 1) / 2
-        if expected < k:
-            expected = k
+        expected = k +   i * k / ( len(p) / p.count('0'))
         return expected
 
 

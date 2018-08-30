@@ -30,13 +30,13 @@ def compute(config: str, pattern: str, pos_list: list, max_rounds: int, print_in
     for pos in pos_list:
         c.attach_bot(pos)
 
-    if 'c' in print_info:
+    if 'c' in print_info:   # print configuration (in case you want to see the config but have -v 0)
         logging.warning('C_0:\n' + str(config))
-    if 'p' in print_info:
+    if 'p' in print_info:   # print pattern
         logging.warning('P:\n' + str(pattern))
-    if 'a' in print_info:
+    if 'a' in print_info:   # analyse (aka get the bound)
         logging.warning(c.get_config_stats())
-    if 'rou' in print_info:
+    if 'rou' in print_info: # print round info (aka print i on every round)
         c.rounds_info = True
 
     c.run_algo(max_rounds)
@@ -46,6 +46,36 @@ def compute(config: str, pattern: str, pos_list: list, max_rounds: int, print_in
         logging.warning(c.get_robots_stats())
     if 'rob' in print_info:
         [logging.warning(bot) for bot in c.bots]
+
+#def recursive_for_loop(pos_array, current_attempt, current_pos, limit, additional_robots: int):
+#        if additional_robots == 0:
+#            for j in range(2, limit):
+#                current_attempt.append(j)
+#                pos_array.append(local_attempt)
+#        else:
+#            recursive_for_loop(pos_array,local_attempt, current_pos + 1, limit, additional_robots = additional_robots - 1)
+
+def recursive_for_loop(pos_array, current_attempt, limit, additional_robots: int):
+    if limit == -1:
+        if
+    for j in range(2, limit):
+        local_attempt = current_attempt.copy()
+        if j == limit -  and current_attempt[0] == 0:
+        local_attempt.append(j)
+        if additional_robots == 0:
+            pos_array.append(local_attempt)
+        else:
+            recursive_for_loop(pos_array,local_attempt, limit, additional_robots = additional_robots - 1)
+
+
+def generate_all_possible_positions(config_length, pattern_length):
+    k = config_length / pattern_length
+    positions = []
+
+    for i in range(0,k - 1):
+        positions.append([i * pattern_length])
+
+    recursive_for_loop(positions, [], k, -1, k/2)
 
 
 def main():
@@ -93,8 +123,11 @@ def main():
     particular_parser.add_argument('max_rounds', type=int, default = 10000,
             help = 'the max number of rounds before the algo automatically stops and declares itself failed')
 
-    particular_parser.add_argument('robot_starts', nargs='+', default = [0],
+    particular_parser.add_argument('robot_starts', nargs='+', default = [],
             help = 'the start positions of each robot. put a space between each position.')
+
+    particular_parser.add_argument('--try_all', '-t', action='store_true',
+            help='To try all robot quantities with all possible robot placements. In larger configurations, this is discouraged.')
 
 
     # random
@@ -131,9 +164,14 @@ def main():
     logging.warning(args)
 
     # running algo
+    attempts = []
+
     if args.command == 'particular':
-        pos_list = [int(pos) for pos in args.robot_starts]
-        compute(args.config, args.pattern, pos_list, args.max_rounds, args.print_info, args.print_full)
+        if args.try_all:
+            all_robots = ## combinatorics for generating all robots and all placements
+        else:
+            pos_list = [int(pos) for pos in args.robot_starts]
+            attempts.push([args.config, args.pattern, pos_list, args.max_rounds, args.print_info, args.print_full])
 
     elif args.command == 'random':
         if not args.pattern_size and not args.pattern:
@@ -144,7 +182,7 @@ def main():
             raise AssertionError('you didn\'t give a config size that divides perfectly into the pattern size!')
             sys.exit(0)
 
-        for attempt in range(0, args.config_quant):
+        for i in range(0, args.config_quant):
             if args.pattern_size:
                 num_of_0s = random.randint(1, args.pattern_size - 1)
                 pattern = ''.join(random.sample('0' * num_of_0s + '1' * (args.pattern_size - num_of_0s), args.pattern_size))
@@ -154,8 +192,10 @@ def main():
             pos_list = []
             for i in range(0, args.robots_quant):
                 pos_list.append(i * len(pattern) * 2)
-            compute(config, pattern, pos_list, args.max_rounds, args.print_info, args.print_full)
+            attempts.push([config, pattern, pos_list, args.max_rounds, args.print_info, args.print_full])
 
+    for attempt in attempts:
+        compute(attempt[0], attempt[1], attempt[2], attempt[3], attempt[4], attempt[5])
 
 # don't call main unless the script is called directly.
 if __name__ == '__main__':

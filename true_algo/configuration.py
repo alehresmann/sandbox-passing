@@ -174,7 +174,7 @@ class configuration:
             #if self.bots[0].total_rounds >= 130:
             #    print(self.initial_configuration.to01())
             logging.warning('\nSUCCESS!')
-            logging.warning('total rounds:', self.bots[0].total_rounds)
+            logging.warning('total rounds:' + str(self.bots[0].total_rounds))
 
         else:
             logging.warning(self.get_robots_stats())
