@@ -12,7 +12,7 @@ from colorama import init
 
 from configuration import configuration
 
-def compute(config: str, pattern: str, pos_list: list, max_rounds: int, print_info: str, print_full: bool):
+def compute(config: str, pattern: str, pos_list: list, max_rounds: int, print_info: str, print_full: bool, ignore_analyser: bool):
     try:
         int(pattern, 2)
         int(config, 2)
@@ -25,7 +25,7 @@ def compute(config: str, pattern: str, pos_list: list, max_rounds: int, print_in
     if max_rounds < 1:
         raise AssertionError('Max rounds value must be greater than 1!')
 
-    c = configuration(pattern, config, print_full)
+    c = configuration(pattern, config, print_full, ignore_analyser)
 
     for pos in pos_list:
         c.attach_bot(pos)
@@ -55,27 +55,27 @@ def compute(config: str, pattern: str, pos_list: list, max_rounds: int, print_in
 #        else:
 #            recursive_for_loop(pos_array,local_attempt, current_pos + 1, limit, additional_robots = additional_robots - 1)
 
-def recursive_for_loop(pos_array, current_attempt, limit, additional_robots: int):
-    if limit == -1:
-        if
-    for j in range(2, limit):
-        local_attempt = current_attempt.copy()
-        if j == limit -  and current_attempt[0] == 0:
-        local_attempt.append(j)
-        if additional_robots == 0:
-            pos_array.append(local_attempt)
-        else:
-            recursive_for_loop(pos_array,local_attempt, limit, additional_robots = additional_robots - 1)
-
-
-def generate_all_possible_positions(config_length, pattern_length):
-    k = config_length / pattern_length
-    positions = []
-
-    for i in range(0,k - 1):
-        positions.append([i * pattern_length])
-
-    recursive_for_loop(positions, [], k, -1, k/2)
+#def recursive_for_loop(pos_array, current_attempt, limit, additional_robots: int):
+#    if limit == -1:
+#        if
+#    for j in range(2, limit):
+#        local_attempt = current_attempt.copy()
+#        if j == limit -  and current_attempt[0] == 0:
+#        local_attempt.append(j)
+#        if additional_robots == 0:
+#            pos_array.append(local_attempt)
+#        else:
+#            recursive_for_loop(pos_array,local_attempt, limit, additional_robots = additional_robots - 1)
+#
+#
+#def generate_all_possible_positions(config_length, pattern_length):
+#    k = config_length / pattern_length
+#    positions = []
+#
+#    for i in range(0,k - 1):
+#        positions.append([i * pattern_length])
+#
+#    recursive_for_loop(positions, [], k, -1, k/2)
 
 
 def main():
@@ -97,6 +97,11 @@ def main():
             help='Whether or not you want the config to be printed fully ' \
                     'at every round or just minimally. You won\'t see a ' \
                     'change if verbosity is set to 0')
+
+    parser.add_argument('--ignore_analyser', '-ia', action='store_true',
+            help='Lets you ignore the analyser, if you want to run on a ' \
+                    'config without verifying its bound.')
+
     # subparsers
     subparsers = parser.add_subparsers(title='subcommands - Use \'-h\' to find out more.',
     metavar='', dest='command')
@@ -168,10 +173,11 @@ def main():
 
     if args.command == 'particular':
         if args.try_all:
-            all_robots = ## combinatorics for generating all robots and all placements
+            pass
+            #all_robots = ## combinatorics for generating all robots and all placements
         else:
             pos_list = [int(pos) for pos in args.robot_starts]
-            attempts.push([args.config, args.pattern, pos_list, args.max_rounds, args.print_info, args.print_full])
+            attempts.append([args.config, args.pattern, pos_list, args.max_rounds, args.print_info, args.print_full, args.ignore_analyser])
 
     elif args.command == 'random':
         if not args.pattern_size and not args.pattern:
@@ -192,10 +198,10 @@ def main():
             pos_list = []
             for i in range(0, args.robots_quant):
                 pos_list.append(i * len(pattern) * 2)
-            attempts.push([config, pattern, pos_list, args.max_rounds, args.print_info, args.print_full])
+            attempts.append([config, pattern, pos_list, args.max_rounds, args.print_info, args.print_full, args.ignore_analyser])
 
     for attempt in attempts:
-        compute(attempt[0], attempt[1], attempt[2], attempt[3], attempt[4], attempt[5])
+        compute(attempt[0], attempt[1], attempt[2], attempt[3], attempt[4], attempt[5], attempt[6])
 
 # don't call main unless the script is called directly.
 if __name__ == '__main__':

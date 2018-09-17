@@ -12,7 +12,7 @@ from analyser import analyser
 colours = [ Fore.RED, Fore.GREEN, Fore.BLUE, Fore.YELLOW, Fore.MAGENTA, Fore.CYAN ]
 
 class configuration:
-    def __init__(self, pattern: str, input_string: str, pf=False):
+    def __init__(self, pattern: str, input_string: str, pf=False, ia=False):
         try:
             int(pattern, 2)
             int(input_string, 2)
@@ -32,13 +32,15 @@ class configuration:
         self.slice_size = len(pattern)
         self.bots = []
         self.initial_configuration = bitarray(input_string)
-        self.a = analyser()
+        self.a = analyser(input_string, pattern)
         self.pf = pf
+        self.ia = ia
         self.rounds_info = False
 
     def __len__(self):
         return len(self.configuration)
 
+    #printing stuff
     def __str__(self):
         if self.pf:
             return self.print_full()
@@ -102,11 +104,12 @@ class configuration:
         return ret
 
     def get_config_stats(self):
-        return str(self.a.get_upper_bound(self.initial_configuration.to01(), self.pattern.to01()))
+        return str(self.a.get_upper_bound())
 
     def get_round_stats(self):
-        return 'i: ' + str(self.a.count_invalid(str(self.configuration), self.pattern.to01()))
+        return 'i: ' + str(self.a.count_invalid(str(self.configuration)))
 
+    #logic stuff
     def attach_bot(self, index: int):
         check = self.configuration.get_node_at(index)
         for i in range(0, self.slice_size * 2):
@@ -159,6 +162,10 @@ class configuration:
                 extra = self.get_round_stats()
             logging.info('\nRound ' + str(round_count) + ' start:\t' + str(self) + ' ' + extra)
             self.run_round()
+            if not self.ia and not self.a.analyse_end_of_round(str(self.configuration), round_count):
+                raise ValueError('ERROR! Did not meet upper bound necessity!')
+                logging.warning(self.get_robots_stats())
+                logging.warning(self.configuration)
             round_count += 1
             logging.debug('\n')
             if self.all_done():
