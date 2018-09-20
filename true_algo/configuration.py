@@ -173,7 +173,6 @@ class configuration:
                 break
 
         if self.check_if_patterned():
-
             #if self.a.get_upper_bound(self.initial_configuration.to01(), self.pattern.to01()) < self.bots[0].total_rounds:
             #        print(self.initial_configuration.to01(),
             #                self.a.get_upper_bound(self.initial_configuration.to01(), self.pattern.to01()),

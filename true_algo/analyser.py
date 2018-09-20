@@ -34,7 +34,7 @@ class analyser:
         new_i = self.count_invalid(new_c)
         self.valid_slices_made_this_pass += self.i - new_i
 
-        if r % (self.k) == 0:  # I am at the end of the pass. Have I met my bound?
+        if r > self.k and r % (self.k) == 0:  # I am at the end of the pass. Have I met my bound?
             if not self.valid_slices_made_this_pass >= self.m:
                 return False
             else:
@@ -43,4 +43,3 @@ class analyser:
         self.c = new_c
         self.i = new_i
         return True
-
