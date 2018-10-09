@@ -28,11 +28,12 @@ class configuration:
             raise AssertionError('Assure yourself you have the correct number of 1s and 0s in your config to reach the pattern!')
 
         self.configuration = circular_list(input_string)
+        self.old_configuration = str(self.configuration) # for the analyser
         self.pattern = bitarray(pattern)
-        self.slice_size = len(pattern)
+        self.slice_length = len(pattern)
         self.bots = []
         self.initial_configuration = bitarray(input_string)
-        self.a = analyser(input_string, pattern)
+        self.a = analyser(pattern)
         self.pf = pf
         self.ia = ia
         self.rounds_info = False
@@ -66,15 +67,15 @@ class configuration:
 
         slice_ownership = []
         node = self.configuration.first_node
-        for i in range(0, int(len(c_string) / self.slice_size)):
+        for i in range(0, int(len(c_string) / self.slice_length)):
             if node.owned_by is None:
                 slice_ownership.append(-1)
             else:
                 slice_ownership.append(node.owned_by.ID)
-            for j in range(0, self.slice_size):
+            for j in range(0, self.slice_length):
                 node = node.next
 
-        slices = [c_string[i: i + self.slice_size] for i in range(0, len(c_string), self.slice_size)]
+        slices = [c_string[i: i + self.slice_length] for i in range(0, len(c_string), self.slice_length)]
 
         heaviness = []
         for s in slices:
@@ -103,16 +104,13 @@ class configuration:
         ret += Fore.WHITE
         return ret
 
-    def get_config_stats(self):
-        return str(self.a.get_upper_bound())
-
     def get_round_stats(self):
         return 'i: ' + str(self.a.count_invalid(str(self.configuration)))
 
     #logic stuff
     def attach_bot(self, index: int):
         check = self.configuration.get_node_at(index)
-        for i in range(0, self.slice_size * 2):
+        for i in range(0, self.slice_length * 2):
             if check.owned_by is not None:
                 raise AssertionError('Can\'t place bot at ' +str(index) +'! Overlapping with R'+ str(check.owned_by))
             check = check.next
@@ -120,7 +118,7 @@ class configuration:
         temp = self.configuration.get_node_at(index)
 
         bot = robot(len(self.bots), self.pattern, temp, self.k)
-        for i in range(0, self.slice_size * 2):
+        for i in range(0, self.slice_length * 2):
             temp.owned_by = bot
             temp = temp.next
         self.bots.append(bot)
@@ -162,10 +160,17 @@ class configuration:
                 extra = self.get_round_stats()
             logging.info('\nRound ' + str(round_count) + ' start:\t' + str(self) + ' ' + extra)
             self.run_round()
-            if not self.ia and not self.a.analyse_end_of_round(str(self.configuration), round_count):
-                raise ValueError('ERROR! Did not meet upper bound necessity!')
-                logging.warning(self.get_robots_stats())
-                logging.warning(self.configuration)
+
+            # verify bound of pass is met
+            if not self.ia:
+                if round_count > 1 and round_count - 1 % (self.k) == 0:
+                    print(round_count)
+                    if not self.a.verify_pass(self.old_configuration, str(self.configuration), len(self.bots)):
+                        raise ValueError('ERROR! Did not meet upper bound necessity!')
+                        logging.warning(self.get_robots_stats())
+                        logging.warning(self.configuration)
+                    self.old_configuration = str(self.configuration)
+
             round_count += 1
             logging.debug('\n')
             if self.all_done():

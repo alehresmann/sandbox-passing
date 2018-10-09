@@ -34,8 +34,6 @@ def compute(config: str, pattern: str, pos_list: list, max_rounds: int, print_in
         logging.warning('C_0:\n' + str(config))
     if 'p' in print_info:   # print pattern
         logging.warning('P:\n' + str(pattern))
-    if 'a' in print_info:   # analyse (aka get the bound)
-        logging.warning(c.get_config_stats())
     if 'rou' in print_info: # print round info (aka print i on every round)
         c.rounds_info = True
 
