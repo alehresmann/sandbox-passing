@@ -1,11 +1,5 @@
-import sys
-import logging
-
-from circular_list import node
-
-
-class command():
-    def __init__(self, bot, count_as_op = True):
+class command:
+    def __init__(self, bot, count_as_op=True):
         self.bot = bot
         self.count_as_op = count_as_op
 
@@ -16,15 +10,26 @@ class command():
     def __repr__(self):
         return self.__str__()
 
+
 class switch_command(command):
-    def __init__(self, bot, first_index, second_index, first_in_window, second_in_window):
+    def __init__(
+        self, bot, first_index, second_index, first_in_window, second_in_window
+    ):
         command.__init__(self, bot)
         self.indices = [first_index, second_index]
         self.in_windows = [first_in_window, second_in_window]
 
     def __str__(self):
-        return 'switch ' + str(self.indices[0]) + ' in ' + ('w' if self.in_windows[0] else 's') \
-                + ' and '+ str(self.indices[1]) + ' in ' + ('w' if self.in_windows[1] else 's')
+        return (
+            "switch "
+            + str(self.indices[0])
+            + " in "
+            + ("w" if self.in_windows[0] else "s")
+            + " and "
+            + str(self.indices[1])
+            + " in "
+            + ("w" if self.in_windows[1] else "s")
+        )
 
     def execute(self):
         switch = []
@@ -43,7 +48,7 @@ class move_command(command):
         self.forward = forward
 
     def __str__(self):
-        return 'move'
+        return "move"
 
     def execute(self):
         if self.forward:

@@ -1,5 +1,5 @@
 import sys
-import os
+
 
 def readlines(filepath: str):
     with open(filepath) as f:
@@ -7,9 +7,10 @@ def readlines(filepath: str):
         lines = [x.strip() for x in lines]
     return lines
 
+
 lines = readlines(sys.argv[1])
 even = []
-odd  = []
+odd = []
 
 for i in range(0, len(lines)):
     line = lines[i]
@@ -19,5 +20,5 @@ for i in range(0, len(lines)):
         odd.append(line)
 
 [print(el) for el in even]
-print('ODD')
+print("ODD")
 [print(el) for el in odd]

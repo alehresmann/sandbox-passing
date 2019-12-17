@@ -1,11 +1,13 @@
 # A doubly-linked circular linked list, with an additional 'owned_by' for node ownership
 
+
 class node:
     def __init__(self):
         self.data = None
         self.prev = None
         self.next = None
         self.owned_by = None
+
 
 class circular_list:
     def __init__(self, input_string: str):
@@ -14,7 +16,7 @@ class circular_list:
         self.length = len(input_string)
 
         for char in input_string:
-            self._add_at_end(char == '1')
+            self._add_at_end(char == "1")
 
         self._make_circular()
 
@@ -44,7 +46,7 @@ class circular_list:
 
     def __str__(self):
         node = self.first_node
-        ret = ''
+        ret = ""
         for i in range(0, len(self)):
             ret += str(int(node.data is True))
             node = node.next
