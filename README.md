@@ -1,7 +1,7 @@
 # Sandbox Passing
 
 # Table of Contents
-* *What is this ?*
+* **What is this ?**
 * **Requirements and Installation**
 * **Why This Utility?**
 * **Brief Usage**
@@ -12,7 +12,7 @@
 
 
 # What is this ?
-The following repository contains code written during my bachelor's at Concordia University, which eventually resulted in the publication "Distributed Pattern Formation in a Ring", [available on axiv.org](https://arxiv.org/abs/1905.08856) in [SIROCCO 2019](https://cs.gssi.it/sirocco2019/). I highlight that the code is rather old and shows a clear lack of experience in both good programming as well as research practices. Nevertheless, the last implementation is quite useable, and thus perhaps worth publishing. I highly doubt anyone will even read it, but for the sake of "open science" and archival purposes, I publish it here.
+The following repository contains code written during my bachelor's at Concordia University, which eventually resulted in the publication "Distributed Pattern Formation in a Ring" in [SIROCCO 2019](https://cs.gssi.it/sirocco2019/), [available on axiv.org](https://arxiv.org/abs/1905.08856). I highlight that the code is rather old and shows a clear lack of experience in both good programming as well as research practices. Nevertheless, the last implementation is quite useable, and thus perhaps worth putting it online. I highly doubt anyone will even read it, but for the sake of "open science" and archival purposes, I publish it here.
 
 The folder *src* contains the final implementation that was used for this project. the folder *old_code_implementations* contains, as it suggests, various implementations of the problem in different forms: most are probably only halfway implemented or/and have bugs, so I highly recommend not looking at them.
 
